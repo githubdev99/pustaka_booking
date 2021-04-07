@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 07, 2021 at 10:42 AM
+-- Generation Time: Apr 07, 2021 at 10:49 AM
 -- Server version: 10.4.13-MariaDB
 -- PHP Version: 7.4.7
 
@@ -37,7 +37,7 @@ CREATE TABLE `book` (
   `publisher` varchar(50) DEFAULT NULL,
   `publication_year` year(4) NOT NULL,
   `stock` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='buku';
 
 -- --------------------------------------------------------
 
@@ -48,7 +48,7 @@ CREATE TABLE `book` (
 CREATE TABLE `category` (
   `id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='kategori buku';
 
 -- --------------------------------------------------------
 
@@ -63,7 +63,7 @@ CREATE TABLE `loaning` (
   `amount` int(11) NOT NULL,
   `created_at` datetime NOT NULL,
   `is_return_done` tinyint(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='peminjaman buku';
 
 -- --------------------------------------------------------
 
@@ -77,7 +77,7 @@ CREATE TABLE `returning` (
   `penalty_day` int(11) NOT NULL DEFAULT 0,
   `penalty_price` int(11) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='pengembalian buku';
 
 -- --------------------------------------------------------
 
@@ -88,7 +88,7 @@ CREATE TABLE `returning` (
 CREATE TABLE `role` (
   `id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='hak akses';
 
 -- --------------------------------------------------------
 
@@ -108,7 +108,7 @@ CREATE TABLE `user` (
   `phone_number` varchar(20) NOT NULL,
   `is_active` tinyint(1) NOT NULL,
   `created_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='pengguna';
 
 --
 -- Indexes for dumped tables
