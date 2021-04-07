@@ -12,14 +12,9 @@ class Root extends CI_Controller
     {
         echo '
         <center>
-            <h3>Siplah Eureka Book House API</h3>
+            <h3>Pustaka Booking API</h3>
             <p>Welcome</p>
         </center>
         ';
-    }
-
-    public function oauth()
-    {
-        $this->load->view('oauth');
     }
 }

@@ -2,10 +2,186 @@
 
 class Order extends MY_Controller
 {
-
     public function __construct()
     {
         parent::__construct();
+    }
+
+    private function configOrder($id = null)
+    {
+        if (empty($id)) {
+            $filters = [];
+        } else {
+            $filters = [
+                'type' => 'dropdown',
+                'slug' => 'status',
+                'name' => 'Status',
+                'items' => [
+                    [
+                        'name' => 'Semua Pesanan',
+                        'value' => '',
+                    ],
+                ]
+            ];
+
+            $parsing['db_order_status'] = $this->api_model->select_data([
+                'field' => '*',
+                'table' => 'db_order_status',
+                'order_by' => [
+                    'sort' => 'asc'
+                ],
+            ])->result();
+            foreach ($parsing['db_order_status'] as $key_db_order_status) {
+                $filters['items'][] = [
+                    'name' => $key_db_order_status->name,
+                    'value' => $key_db_order_status->order_status_id,
+                ];
+            }
+        }
+
+        $column = [
+            [
+                'name' => 'No.',
+                'isOrder' => false,
+                'inActive' => false,
+                'value' => '',
+                'order' => '',
+            ],
+            [
+                'name' => 'Invoice',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.invoice_no',
+                'order' => '',
+            ],
+            [
+                'name' => 'Customer',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.shipping_firstname',
+                'order' => '',
+            ],
+            [
+                'name' => 'NPSN',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.npsn',
+                'order' => '',
+            ],
+            [
+                'name' => 'Sekolah',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.shipping_company',
+                'order' => '',
+            ],
+            [
+                'name' => 'Wilayah',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.shipping_city',
+                'order' => '',
+            ],
+            [
+                'name' => 'Status',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'o.name',
+                'order' => '',
+            ],
+            [
+                'name' => 'Total',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'dot.value',
+                'order' => '',
+            ],
+            [
+                'name' => 'Tanggal Order',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.date_added',
+                'order' => '',
+            ],
+            [
+                'name' => 'TOP',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'm.payment_tempo',
+                'order' => '',
+            ],
+            [
+                'name' => 'Opsi',
+                'isOrder' => false,
+                'inActive' => false,
+                'value' => '',
+                'order' => '',
+            ],
+        ];
+
+        return [
+            'filters' => $filters,
+            'column' => $column,
+        ];
+    }
+
+    private function configBilling()
+    {
+        $column = [
+            [
+                'name' => 'No.',
+                'isOrder' => false,
+                'inActive' => false,
+                'value' => '',
+                'order' => '',
+            ],
+            [
+                'name' => 'Kode Pesanan',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'pg.invoice_no',
+                'order' => '',
+            ],
+            [
+                'name' => 'Customer',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'cs.firstname',
+                'order' => '',
+            ],
+            [
+                'name' => 'Tgl Penagihan',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'pg.tgl_penagihan',
+                'order' => '',
+            ],
+            [
+                'name' => 'Tgl Bayar',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'pg.tgl_bayar',
+                'order' => '',
+            ],
+            [
+                'name' => 'Tgl Tanggapan',
+                'isOrder' => true,
+                'inActive' => false,
+                'value' => 'pg.tgl_created',
+                'order' => '',
+            ],
+            [
+                'name' => 'Opsi',
+                'isOrder' => false,
+                'inActive' => false,
+                'value' => '',
+                'order' => '',
+            ],
+        ];
+
+        return [
+            'column' => $column,
+        ];
     }
 
     public function index_get($id = null)
@@ -15,97 +191,110 @@ class Order extends MY_Controller
         } else {
             $checking = true;
 
-            if (empty($this->core['customer'])) {
+            if (empty($this->core['seller'])) {
                 $checking = false;
                 $response = $this->formatter([
                     'code' => self::HTTP_UNAUTHORIZED,
                     'message' => 'unauthorized',
-                    'data' => [],
                 ]);
             } else {
                 if (empty($id)) {
-                    $filters = $this->filter_order();
+                    $filters = $this->configOrder($this->core['seller']['id'])['filters'];
+                    $column = $this->configOrder()['column'];
 
-                    if ($this->get('status') == null) {
+                    if ($this->get('page') == null || $this->get('limit') == null) {
                         $checking = false;
                         $response = $this->formatter([
                             'code' => self::HTTP_BAD_REQUEST,
-                            'message' => 'parameter not found',
-                            'data' => [],
+                            'message' => 'page or limit not found',
+                            'data' => [
+                                'total' => 0,
+                                'items' => [],
+                                'filters' => $filters,
+                                'column' => $column,
+                            ]
                         ]);
                     } else {
-                        if ($this->get('page') == null || $this->get('limit') == null) {
+                        if ($this->get('page') < 1 || $this->get('limit') < 1) {
                             $checking = false;
                             $response = $this->formatter([
                                 'code' => self::HTTP_BAD_REQUEST,
-                                'message' => 'page or limit not found',
+                                'message' => 'value must more than 1',
                                 'data' => [
                                     'total' => 0,
-                                    'orders' => [],
+                                    'items' => [],
                                     'filters' => $filters,
+                                    'column' => $column,
                                 ]
                             ]);
-                        } else {
-                            if ($this->get('page') < 1 || $this->get('limit') < 1) {
-                                $checking = false;
-                                $response = $this->formatter([
-                                    'code' => self::HTTP_BAD_REQUEST,
-                                    'message' => 'value must more than 1',
-                                    'data' => [
-                                        'total' => 0,
-                                        'orders' => [],
-                                        'filters' => $filters,
-                                    ]
-                                ]);
-                            }
                         }
                     }
 
                     if ($checking === true) {
                         $param['db_order']['field'] = '
-                        aa.invoice_no, 
-                        aa.date_added,
-                        aa.order_id,
-                        SUM(aa.total) as total,
-                        aa.payment_method,
-                        aa.order_status_id,
-                        CONCAT(c.firstname, " ", c.lastname) as pemesan,
-                        c.jabatan,
-                        tot.value as total,
-                        db_order_status.name as status,
-                        aa.mall_id,
-                        aa.mall_name,
-                        aa.mall_province,
-                        aa.mall_city';
-                        $param['db_order']['table'] = 'db_order aa';
+                        m.order_id,
+                        m.firstname,
+                        m.lastname,
+                        m.customer_id,
+                        m.shipping_firstname,
+                        m.shipping_lastname,
+                        m.total,
+                        m.date_added,
+                        m.invoice_prefix,
+                        m.invoice_no,
+                        m.date_modified,
+                        m.order_status_id,
+                        m.shipping_kurir,
+                        m.shipping_kurir_type,
+                        m.shipping_company,
+                        m.shipping_city,
+                        m.shipping_province,
+                        m.npsn,
+                        m.awb,
+                        m.mall_id,
+                        m.payment_tempo,
+                        m.payment_va,
+                        o.name,
+                        dot.value';
+                        $param['db_order']['table'] = 'db_order m';
                         $param['db_order']['join'] = [
                             [
-                                'table' => 'db_customer c',
-                                'on' => 'c.customer_id=aa.customer_id',
-                                'type' => 'inner'
+                                'table' => 'db_order_status o',
+                                'on' => 'm.order_status_id=o.order_status_id',
+                                'type' => 'left'
                             ],
                             [
-                                'table' => 'db_order_total tot',
-                                'on' => 'tot.order_id=aa.order_id',
-                                'type' => 'inner'
-                            ],
-                            [
-                                'table' => 'db_order_status',
-                                'on' => 'db_order_status.order_status_id=aa.order_status_id',
+                                'table' => 'db_order_total dot',
+                                'on' => 'dot.order_id=m.order_id',
                                 'type' => 'inner'
                             ],
                         ];
 
-                        $param['db_order']['where'] = [
-                            'aa.order_status_id' => $this->get('status'),
-                            'aa.sekolah_id' => $this->core['customer']['school']['id'],
-                            'tot.code' => 'total',
-                        ];
+                        $arr_filter_status = ($this->get('filter_status') != '') ? [
+                            'm.order_status_id' => $this->get('filter_status')
+                        ] : [];
 
-                        $param['db_order']['group_by'] = 'aa.invoice_no';
-                        $param['db_order']['order_by'] = [
-                            'aa.date_added' => 'desc',
-                        ];
+                        $param['db_order']['where'] = array_merge([
+                            'm.mall_id' => $this->core['seller']['id'],
+                            'dot.code' => 'total'
+                        ], $arr_filter_status);
+
+                        if (!empty($this->get('keyword'))) {
+                            $param['db_order']['like'] = [
+                                'm.invoice_no' => $this->get('keyword')
+                            ];
+                        }
+
+                        $getSort = (!empty($this->get('sort'))) ? explode('-', $this->get('sort')) : null;
+                        if (!empty($getSort)) {
+                            $param['db_order']['order_by'] = [
+                                $getSort[0] => $getSort[1]
+                            ];
+                        } else {
+                            $param['db_order']['order_by'] = [
+                                'm.order_id' => 'desc'
+                            ];
+                        }
 
                         $param['db_order']['limit'] = [
                             $this->get('limit') => ($this->get('page') - 1) * $this->get('limit')
@@ -115,100 +304,84 @@ class Order extends MY_Controller
                         $output = [];
                         if (empty($parsing['db_order'])) {
                             $data['total'] = 0;
-                            $data['orders'] = [];
+                            $data['items'] = [];
                             $code = self::HTTP_NO_CONTENT;
                         } else {
                             $code = self::HTTP_OK;
-                            $total_record = $this->api_model->count_all_data($param['db_order']);
+                            $totalRecord = $this->api_model->count_all_data($param['db_order']);
 
                             $limit = (int) $this->get('limit');
-                            $current_page = (int) $this->get('page');
-                            $total_page = ceil($total_record / $limit);
+                            $currentPage = (int) $this->get('page');
+                            $prevPage = ($currentPage > 1) ? $currentPage - 1 : 0;
+                            $totalPage = ceil($totalRecord / $limit);
 
-                            $data['page'] = $current_page;
-                            $data['limit'] = $limit;
-                            $data['total'] = $total_record;
-                            $data['pages'] = $total_page;
-                            $data['orders'] = [];
+                            $data['path'] = base_url() . "seller/order";
+                            $data['firstPageUrl'] = base_url() . "seller/order?page=1&limit={$limit}";
+                            $data['prevPageUrl'] = ($prevPage > 0) ? base_url() . "seller/order?page={$prevPage}&limit={$limit}" : null;
 
+                            $data['perPage'] = $limit;
+                            $data['currentPage'] = $currentPage;
+                            $data['lastPage'] = $totalPage;
+                            $data['nextPage'] = ($currentPage < $totalPage) ? $currentPage + 1 : null;
+
+                            $data['from'] = ($totalRecord > 0) ? ($currentPage - 1) * $limit + 1 : 0;
+
+                            if ($limit > $totalRecord) {
+                                $data['to'] = $totalRecord;
+                            } else {
+                                $data['to'] = ($currentPage > 1) ? $data['from'] + $limit - 1 : $limit;
+                            }
+
+                            $data['total'] = $totalRecord;
+
+                            $data['sort'] = (!empty($this->get('sort'))) ? $this->get('sort') : 'default';
+                            $data['items'] = [];
+
+                            $no = $data['from'];
                             foreach ($parsing['db_order'] as $key_db_order) {
-                                $date_added = explode(' ', $key_db_order->date_added);
+                                $items['no'] = $no;
+                                $items['id'] = $key_db_order->order_id;
+                                $items['invoice'] = $key_db_order->invoice_no;
+                                $items['customerName'] = "{$key_db_order->shipping_firstname} {$key_db_order->shipping_lastname}";
+                                $items['npsn'] = $key_db_order->npsn;
+                                $items['schoolName'] = $key_db_order->shipping_company;
+                                $items['schoolCity'] = $key_db_order->shipping_city;
 
-                                $orders['id'] = $key_db_order->order_id;
-                                $orders['invoice'] = $key_db_order->invoice_no;
-                                $orders['orderDate'] = date_indo($date_added[0]) . ' ' . $date_added[1];
-                                $orders['customerName'] = $key_db_order->pemesan;
-                                $orders['total'] = $key_db_order->total;
-                                $orders['totalCurrencyFormat'] = rupiah($orders['total']);
-                                $orders['status'] = $key_db_order->status;
-
-                                $parsing['db_mall'] = $this->api_model->select_data([
-                                    'field' => '*',
-                                    'table' => 'db_mall',
-                                    'where' => [
-                                        'mall_id' => $key_db_order->mall_id,
-                                    ],
-                                ])->row();
-                                $orders['mall'] = [
-                                    'id' => $key_db_order->mall_id,
-                                    'name' => $key_db_order->mall_name,
-                                    'slug' => $parsing['db_mall']->slug,
-                                    'image' => (!empty($parsing['db_mall']->image) || $parsing['db_mall']->image != '') ? $this->core['url_image_mall'] . $parsing['db_mall']->image : $this->core['image_not_found'],
-                                    'location' => $key_db_order->mall_city . ', ' . $key_db_order->mall_province,
-                                ];
-
-                                $orders['totalProduct'] = $this->api_model->count_all_data([
-                                    'table' => 'db_order_product',
-                                    'where' => [
-                                        'order_id' => $key_db_order->order_id,
-                                    ],
-                                ]);
-
-                                $parsing['db_order_product'] = $this->api_model->select_data([
-                                    'field' => '
-                                    aa.name,
-                                    aa.quantity,
-                                    aa.price,
-                                    aa.order_id,
-                                    bb.image,
-                                    bb.product_id',
-                                    'table' => 'db_order_product aa',
-                                    'join' => [
-                                        [
-                                            'table' => 'db_product bb',
-                                            'on' => 'bb.product_id=aa.product_id',
-                                            'type' => 'left'
-                                        ],
-                                    ],
-                                    'where' => [
-                                        'aa.order_id' => $key_db_order->order_id,
-                                    ],
-                                    'limit' => 1,
-                                ])->result();
-                                $orders['items'] = [];
-                                foreach ($parsing['db_order_product'] as $key_db_order_product) {
-                                    $items['name'] = $key_db_order_product->name;
-                                    $items['image'] = (!empty($key_db_order_product->image) || $key_db_order_product->image != '') ? $this->core['url_image_product'] . $key_db_order_product->image : $this->core['image_not_found'];
-                                    $items['qty'] = $key_db_order_product->quantity;
-                                    $items['price'] = $key_db_order_product->price;
-                                    $items['priceCurrencyFormat'] = rupiah($items['price']);
-                                    $items['totalPrice'] = $items['price'] * $items['qty'];
-                                    $items['totalPriceCurrencyFormat'] = rupiah($items['totalPrice']);
-
-                                    $orders['items'][] = $items;
+                                if ($key_db_order->name == 'Dibatalkan') {
+                                    $statusType = 'badge-danger';
+                                } elseif ($key_db_order->name == 'Diterima') {
+                                    $statusType = 'badge-success';
+                                } elseif ($key_db_order->name == 'Ditolak Penyedia') {
+                                    $statusType = 'badge-danger';
+                                } elseif ($key_db_order->name == 'Diproses') {
+                                    $statusType = 'badge-warning';
+                                } else {
+                                    $statusType = 'badge-success';
                                 }
 
-                                $data['orders'][] = $orders;
+                                $items['status'] = '<span class="badge ' . $statusType . '">' . $key_db_order->name . '</span>';
+                                $items['total'] = rupiah($this->getOrderTotalType([
+                                    'id' => $key_db_order->order_id,
+                                    'code' => 'total'
+                                ]));
+                                $items['date'] = date('d-m-Y', strtotime($key_db_order->date_added));
+                                $items['paymentDue'] = "{$key_db_order->payment_tempo} hari";
+
+                                $data['items'][] = $items;
+
+                                $no++;
                             }
                         }
 
-                        foreach ($filters as $key_filters) {
-                            $data['filters'][] = [
-                                'title' => $key_filters['title'],
-                                'id' => $key_filters['id'],
-                                'total' => $key_filters['total'],
-                                'type' => $key_filters['type'],
-                                'inActive' => ($this->get('status') == $key_filters['id']) ? true : false,
+                        $data['filters'] = $this->configOrder($this->core['seller']['id'])['filters'];
+
+                        foreach ($column as $key_column) {
+                            $data['column'][] = [
+                                'name' => $key_column['name'],
+                                'isOrder' => $key_column['isOrder'],
+                                'inActive' => ($getSort[0] == $key_column['value']) ? true : false,
+                                'value' => ($getSort[0] == $key_column['value']) ? $getSort[0] : $key_column['value'],
+                                'order' => ($getSort[0] == $key_column['value']) ? $getSort[1] : '',
                             ];
                         }
 
@@ -221,523 +394,955 @@ class Order extends MY_Controller
                         ]);
                     }
                 } else {
-                    if ($checking === true) {
-                        $parsing['db_order'] = $this->api_model->select_data([
-                            'field' => '
-                            aa.order_id,
-                            aa.invoice_no,
-                            aa.invoice_prefix,
-                            aa.mall_id,
-                            aa.customer_id,
-                            aa.shipping_zone,
-                            aa.payment_method,
-                            aa.payment_va,
-                            aa.berattotal,
-                            aa.subtotal,
-                            aa.ongkoskirim,
-                            aa.subtotal_final,
-                            aa.awb,
-                            aa.shipping_id AS alamat_id,
-                            aa.shipping_code,
-                            aa.date_added,
-                            aa.comment,
-                            aa.order_status_id,
-                            aa.mall_name,
-                            aa.shipping_company,
-                            aa.shipping_address_1,
-                            aa.shipping_address_2,
-                            aa.telephone,
-                            aa.shipping_province,
-                            aa.shipping_postcode,
-                            aa.shipping_city,
-                            aa.shipping_firstname,
-                            aa.shipping_lastname,
-                            aa.total,
-                            aa.withdraw_status,
-                            aa.email,
-                            aa.konfirm_bayar,
-                            aa.payment_tempo,
-                            aa.denda_date,
-                            aa.denda_bayar,
-                            aa.denda_hari,
-                            aa.mall_zone,
-                            aa.mall_city,
-                            aa.mall_province,
-                            aa.mall_postcode,
-                            aa.mall_address,
-                            aa.date_added as tgl_order,
-                            cc.nama_pic as mall_pic,
-                            cc.telp_pic as mall_phone',
-                            'table' => 'db_order aa',
-                            'join' => [
-                                [
-                                    'table' => 'db_mall cc',
-                                    'on' => 'cc.mall_id=aa.mall_id',
-                                    'type' => 'left'
-                                ],
-                            ],
-                            'where' => [
-                                'aa.order_id' => $id,
-                                'aa.sekolah_id' => $this->core['customer']['school']['id'],
-                            ],
-                        ])->row();
+                    // $parsing['db_product'] = $this->api_model->select_data([
+                    //     'field' => '*',
+                    //     'table' => 'db_product',
+                    //     'where' => [
+                    //         'product_id' => $id
+                    //     ]
+                    // ])->row();
+                    // if (empty($parsing['db_product'])) {
+                    //     $checking = false;
+                    //     $response = $this->formatter([
+                    //         'code' => self::HTTP_NOT_FOUND,
+                    //         'message' => 'data not found',
+                    //         'data' => (object) []
+                    //     ]);
+                    // } else {
+                    //     if ($this->core['seller']['id'] != $parsing['db_product']->mall_id) {
+                    //         $checking = false;
+                    //         $response = $this->formatter([
+                    //             'code' => self::HTTP_BAD_REQUEST,
+                    //             'message' => 'bad request',
+                    //         ]);
+                    //     }
+                    // }
 
-                        if (empty($parsing['db_order'])) {
-                            $output = (object) [];
-                            $code = self::HTTP_NO_CONTENT;
-                        } else {
-                            $output = [];
-                            $code = self::HTTP_OK;
+                    // if ($checking === true) {
+                    //     $param['db_order']['field'] = '
+                    //     dc.*,
+                    //     dc.length AS p,
+                    //     dc.width AS l,
+                    //     dc.height AS t,
+                    //     dc.quantity AS stok,
+                    //     dc.storage_quantity AS stok_gudang,
+                    //     dc.store_quantity AS stok_toko,
+                    //     dm.name AS penerbit,
+                    //     dm.manufacturer_id,
+                    //     dpd.name,
+                    //     dpd.tag,
+                    //     dpd.meta_description,
+                    //     dpd.meta_keyword,
+                    //     dpd.description,
+                    //     dpd.seo,
+                    //     dc.kondisi,
+                    //     dc.image,
+                    //     dpc.category_id,
+                    //     dc.pph,dc.ppn';
+                    //     $param['db_order']['table'] = 'db_product dc';
+                    //     $param['db_order']['join'] = [
+                    //         [
+                    //             'table' => 'db_product_description dpd',
+                    //             'on' => 'dc.product_id=dpd.product_id',
+                    //             'type' => 'inner'
+                    //         ],
+                    //         [
+                    //             'table' => 'db_manufacturer dm',
+                    //             'on' => 'dc.manufacturer_id=dm.manufacturer_id',
+                    //             'type' => 'left'
+                    //         ],
+                    //         [
+                    //             'table' => 'db_product_to_category dpc',
+                    //             'on' => 'dc.product_id=dpc.product_id',
+                    //             'type' => 'inner'
+                    //         ],
+                    //     ];
 
-                            $parsing['getBast'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_order_bast',
-                                'where' => [
-                                    'order_id' => $parsing['db_order']->order_id
-                                ]
-                            ])->row_array();
+                    //     $param['db_order']['where'] = [
+                    //         'dc.product_id' => $id
+                    //     ];
 
-                            $date_added = explode(' ', $parsing['db_order']->date_added);
+                    //     $parsing['db_order'] = $this->api_model->select_data($param['db_order'])->row();
 
-                            $orders['id'] = $parsing['db_order']->order_id;
-                            $orders['isCancelOrder'] = ($parsing['db_order']->order_status_id == '0') ? true : false;
-                            $orders['isConfirmPayment'] = ($parsing['db_order']->order_status_id == '17' || $parsing['db_order']->order_status_id == '18') ? true : false;
+                    //     if (empty($parsing['db_order'])) {
+                    //         $output = (object) [];
+                    //         $code = self::HTTP_NO_CONTENT;
+                    //     } else {
+                    //         $output = [];
+                    //         $code = self::HTTP_OK;
 
-                            if (empty($parsing['getBast'])) {
-                                $isEbast = false;
-                            } else {
-                                $isEbast = ($parsing['db_order']->order_status_id == '3' || $parsing['db_order']->order_status_id == '4' || $parsing['db_order']->order_status_id == '5' || $parsing['db_order']->order_status_id == '17' || $parsing['db_order']->order_status_id == '18' || $parsing['db_order']->order_status_id == '20') ? true : false;
-                            }
+                    //         $items['id'] = $parsing['db_order']->product_id;
+                    //         $items['isLayoutBook'] = ($parsing['db_order']->layout == '1') ? true : false;
 
-                            $orders['isEbast'] = $isEbast;
-                            $orders['invoice'] = $parsing['db_order']->invoice_no;
-                            $orders['orderDate'] = date_indo($date_added[0]) . ' ' . $date_added[1];
+                    //         if ($items['isLayoutBook']) {
+                    //             $sectionProductInformation['name'] = $parsing['db_order']->name;
+                    //             $sectionProductInformation['slug'] = $parsing['db_order']->seo;
+                    //             $sectionProductInformation['skKelulusan'] = $parsing['db_order']->sk_kelulusan;
+                    //             $sectionProductInformation['sku'] = $parsing['db_order']->model;
+                    //             $sectionProductInformation['isbn'] = $parsing['db_order']->isbn;
 
-                            if ($parsing['db_order']->order_status_id == '17') {
-                                $nextStep = 'Wajib upload bukti pembayaran dibawah ini untuk konfirmasi pembayaran';
-                            } elseif ($parsing['db_order']->order_status_id == '0') {
-                                $nextStep = 'Tunggu hingga pesanan diproses penyedia';
-                            } elseif ($parsing['db_order']->order_status_id == '2') {
-                                $nextStep = 'Pesanan sedang diproses penyedia';
-                            } elseif ($parsing['db_order']->order_status_id == '3') {
-                                $nextStep = 'Pesanan sedang dalam perjalanan';
-                            } elseif ($parsing['db_order']->order_status_id == '4' || $parsing['db_order']->order_status_id == '5') {
-                                if (empty($parsing['getBast'])) {
-                                    $nextStep = 'Data <b>eBAST</b> tidak ditemukan<br>Silahkan hubungi penyedia untuk mengirim ulang eBAST';
-                                } else {
-                                    $nextStep = 'Wajib isi <b>eBAST</b> dibawah ini sebagai bukti tanda terima';
-                                }
-                            } elseif ($parsing['db_order']->order_status_id == '17') {
-                                $nextStep = 'Pesanan telah ditagihkan, lakukan pembayaran lalu segera konfirmasi pembayaran';
-                            } elseif ($parsing['db_order']->order_status_id == '18') {
-                                $nextStep = 'Pesanan telah dibayarkan, menuju ke halaman pembayaran';
-                            } else {
-                                $nextStep = 'Aksi belum tersedia';
-                            }
+                    //             $sectionProductInformation['class'] = [];
+                    //             for ($iClass = 1; $iClass <= 12; $iClass++) {
+                    //                 $sectionProductInformation['class'][] = [
+                    //                     'value' => $iClass,
+                    //                     'name' => $iClass,
+                    //                     'isSelected' => ($iClass == $parsing['db_order']->kelas) ? true : false,
+                    //                 ];
+                    //             }
 
-                            $orders['nextStep'] = $nextStep;
+                    //             $sectionProductInformation['semester'] = [];
+                    //             for ($iSemester = 1; $iSemester <= 6; $iSemester++) {
+                    //                 $sectionProductInformation['semester'][] = [
+                    //                     'value' => $iSemester,
+                    //                     'name' => $iSemester,
+                    //                     'isSelected' => ($iSemester == $parsing['db_order']->semester) ? true : false,
+                    //                 ];
+                    //             }
 
-                            $parsing['db_order_history'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_order_history aa',
-                                'join' => [
-                                    [
-                                        'table' => 'db_order_status bb',
-                                        'on' => 'bb.order_status_id=aa.order_status_id',
-                                        'type' => 'inner'
-                                    ],
-                                ],
-                                'where' => [
-                                    'aa.order_id' => $parsing['db_order']->order_id,
-                                ],
-                                'order_by' => [
-                                    'aa.order_history_id' => 'desc'
-                                ],
-                            ])->result();
-                            foreach ($parsing['db_order_history'] as $key_db_order_history) {
-                                $createdAt = explode(' ', $key_db_order_history->date_added);
-                                $orders['orderHistory'][] = [
-                                    'title' => $key_db_order_history->name,
-                                    'text' => $key_db_order_history->comment,
-                                    'createdAt' => date_indo($createdAt[0]) . ' ' . $createdAt[1],
-                                ];
-                            }
+                    //             $parsing['getFullCategory'] = $this->api_model->select_data([
+                    //                 'field' => 'db_product_to_category.*, db_category.parent_id',
+                    //                 'table' => 'db_product_to_category',
+                    //                 'join' => [
+                    //                     [
+                    //                         'table' => 'db_category',
+                    //                         'on' => 'db_category.category_id=db_product_to_category.category_id',
+                    //                         'type' => 'inner'
+                    //                     ],
+                    //                 ],
+                    //                 'where' => [
+                    //                     'product_id' => $parsing['db_order']->product_id
+                    //                 ],
+                    //                 'order_by' => [
+                    //                     'db_category.parent_id' => 'ASC'
+                    //                 ]
+                    //             ])->result();
+                    //             $sectionProductInformation['category'] = [];
+                    //             $sectionProductInformation['categoryChildren'] = [];
+                    //             foreach ($parsing['getFullCategory'] as $key_getFullCategory) {
+                    //                 $parentId = '';
+                    //                 if ($key_getFullCategory->parent_id == '0') {
+                    //                     $parentId = $key_getFullCategory->category_id;
 
-                            $parsing['db_bank'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_bank',
-                                'where' => [
-                                    'slug' => $parsing['db_order']->payment_method,
-                                ],
-                            ])->row();
-                            $orders['billingDetail'] = [
-                                'paymentMethod' => ($parsing['db_bank']->bank == 'Virtual Account Mandiri') ? 'Virtual Account' : 'Bank Transfer',
-                                'paymentDue' => $parsing['db_order']->payment_tempo . ' hari',
-                                'bank' => $parsing['db_bank']->bank,
-                                'virtualAccountNumber' => (!empty($parsing['db_order']->payment_va)) ? $parsing['db_order']->payment_va : $parsing['db_bank']->no_rek,
-                                'asName' => 'PT. Eureka Bookhouse',
-                                'shipping' => strtoupper($parsing['db_order']->shipping_code),
-                                'total' => $parsing['db_order']->total,
-                                'totalCurrencyFormat' => rupiah($parsing['db_order']->total),
-                            ];
+                    //                     $parsing['db_category'] = $this->api_model->select_data([
+                    //                         'field' => 'aa.category_id,bb.name as nama_kategori,aa.status',
+                    //                         'table' => 'db_category aa',
+                    //                         'join' => [
+                    //                             [
+                    //                                 'table' => 'db_category_description bb',
+                    //                                 'on' => 'aa.category_id=bb.category_id',
+                    //                                 'type' => 'inner'
+                    //                             ],
+                    //                         ],
+                    //                         'where' => [
+                    //                             'aa.status' => '1',
+                    //                             'aa.parent_id' => '0'
+                    //                         ]
+                    //                     ])->result();
+                    //                     foreach ($parsing['db_category'] as $key_db_category) {
+                    //                         $category['value'] = $key_db_category->category_id;
+                    //                         $category['name'] = $key_db_category->nama_kategori;
+                    //                         $category['isSelected'] = ($key_db_category->category_id == $key_getFullCategory->category_id) ? true : false;
 
-                            $orders['shippingAddress'] = [
-                                'to' => $parsing['db_order']->shipping_company,
-                                'pic' => $parsing['db_order']->shipping_firstname . ' ' . $parsing['db_order']->shipping_lastname,
-                                'address' => $parsing['db_order']->shipping_address_2,
-                                'addressDetail' => $parsing['db_order']->shipping_zone . ', ' . $parsing['db_order']->shipping_city . ', ' . $parsing['db_order']->shipping_province . ', ' . $parsing['db_order']->shipping_postcode,
-                                'phone' => $parsing['db_order']->telephone,
-                            ];
+                    //                         $sectionProductInformation['category'][] = $category;
+                    //                     }
+                    //                 } else {
+                    //                     $parsing['db_category_children'] = $this->api_model->select_data([
+                    //                         'field' => 'aa.category_id,bb.name as nama_kategori,aa.status',
+                    //                         'table' => 'db_category aa',
+                    //                         'join' => [
+                    //                             [
+                    //                                 'table' => 'db_category_description bb',
+                    //                                 'on' => 'aa.category_id=bb.category_id',
+                    //                                 'type' => 'inner'
+                    //                             ],
+                    //                         ],
+                    //                         'where' => [
+                    //                             'aa.status' => '1',
+                    //                             'aa.parent_id' => $parentId
+                    //                         ]
+                    //                     ])->result();
+                    //                     foreach ($parsing['db_category_children'] as $key_db_category_children) {
+                    //                         $categoryChildren['value'] = $key_db_category_children->category_id;
+                    //                         $categoryChildren['name'] = $key_db_category_children->nama_kategori;
+                    //                         $categoryChildren['isSelected'] = ($key_db_category_children->category_id == $key_getFullCategory->category_id) ? true : false;
 
-                            $parsing['db_mall'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_mall',
-                                'where' => [
-                                    'mall_id' => $parsing['db_order']->mall_id,
-                                ],
-                            ])->row();
-                            $orders['mall'] = [
-                                'id' => $parsing['db_order']->mall_id,
-                                'name' => $parsing['db_order']->mall_name,
-                                'slug' => $parsing['db_mall']->slug,
-                                'image' => (!empty($parsing['db_mall']->image) || $parsing['db_mall']->image != '') ? $this->core['url_image_mall'] . $parsing['db_mall']->image : $this->core['image_not_found'],
-                                'address' => $parsing['db_order']->mall_address,
-                                'location' => $parsing['db_order']->mall_city . ', ' . $parsing['db_order']->mall_province . ', ' . $parsing['db_order']->mall_postcode,
-                                'pic' => $parsing['db_order']->mall_pic,
-                                'phone' => (!empty($parsing['db_order']->mall_phone)) ? $parsing['db_order']->mall_phone : null,
-                            ];
+                    //                         $sectionProductInformation['categoryChildren'][] = $categoryChildren;
+                    //                     }
+                    //                 }
+                    //             }
 
-                            $parsing['db_order_status'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_order_status',
-                                'where' => [
-                                    'order_status_id' => $parsing['db_order']->order_status_id,
-                                ],
-                            ])->row();
-                            $orders['status'] = [
-                                'name' => $parsing['db_order_status']->name,
-                                'detail' => $parsing['db_order_status']->komentar,
-                                'orderStatus' => $parsing['db_order_status']->status_transaksi,
-                            ];
+                    //             $parsing['db_manufacturer'] = $this->api_model->select_data([
+                    //                 'field' => '*',
+                    //                 'table' => 'db_manufacturer',
+                    //                 'order_by' => [
+                    //                     'name' => 'ASC'
+                    //                 ]
+                    //             ])->result();
+                    //             $sectionProductInformation['manufacturer'] = [];
+                    //             foreach ($parsing['db_manufacturer'] as $key_db_manufacturer) {
+                    //                 $manufacturer['value'] = $key_db_manufacturer->manufacturer_id;
+                    //                 $manufacturer['name'] = $key_db_manufacturer->name;
+                    //                 $manufacturer['isSelected'] = ($key_db_manufacturer->manufacturer_id == $parsing['db_order']->manufacturer_id) ? true : false;
 
-                            $parsing['db_order_pembayaran'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_order_pembayaran aa',
-                                'join' => [
-                                    [
-                                        'table' => 'db_status_pembayaran bb',
-                                        'on' => 'bb.id=aa.id_status_pembayaran',
-                                        'type' => 'inner'
-                                    ],
-                                ],
-                                'where' => [
-                                    'aa.order_id' => $parsing['db_order']->order_id,
-                                ],
-                            ])->row();
-                            if ($orders['isConfirmPayment'] === false || empty($parsing['db_order_pembayaran'])) {
-                                $orders['confirmPayment'] = (object) [];
-                            } else {
-                                $orders['confirmPayment'] = [
-                                    'status' => $parsing['db_order_pembayaran']->singkat,
-                                    'invoice' => $parsing['db_order_pembayaran']->invoice_no,
-                                    'method' => $parsing['db_order_pembayaran']->metode,
-                                    'accountNumber' => $parsing['db_order_pembayaran']->no_rek_pembeli,
-                                    'asName' => $parsing['db_order_pembayaran']->an_rek_pembeli,
-                                    'date' => $parsing['db_order_pembayaran']->date_created,
-                                    'memo' => $parsing['db_order_pembayaran']->memo,
-                                    'datePayment' => $parsing['db_order_pembayaran']->tgl_pembayaran,
-                                    'total' => $parsing['db_order_pembayaran']->total_pembayaran,
-                                    'totalCurrencyFormat' => rupiah($parsing['db_order_pembayaran']->total_pembayaran),
-                                    'adminFee' => $parsing['db_order_pembayaran']->biaya_admin,
-                                    'adminFeeCurrencyFormat' => rupiah($parsing['db_order_pembayaran']->biaya_admin),
-                                    'ppn' => $parsing['db_order_pembayaran']->ppn,
-                                    'image' => $this->core['url_image_confirm_payment'] . $parsing['db_order_pembayaran']->img_upload,
-                                ];
-                            }
+                    //                 $sectionProductInformation['manufacturer'][] = $manufacturer;
+                    //             }
 
-                            if (!$orders['isEbast']) {
-                                $orders['eBast'] = (object) [];
-                            } else {
-                                $parsing['db_order_bast'] = $this->api_model->select_data([
-                                    'field' => '
-                                    aa.*,bb.invoice_no,bb.shipping_firstname,bb.shipping_company,bb.shipping_address_2,bb.shipping_zone,bb.shipping_kecamatan,bb.shipping_city,bb.shipping_province,bb.shipping_postcode,
-                                    bb.shipping_lastname,cc.name as mall_name,
-                                    bb.mall_address,bb.mall_zone,bb.mall_city,bb.mall_province,bb.mall_postcode,bb.telephone,
-                                    dd.img_upload as img_struk,
-                                    cc.nama_pic,
-                                    cc.jabatan_pic,
-                                    dd.*',
-                                    'table' => 'db_order_bast aa',
-                                    'join' => [
-                                        [
-                                            'table' => 'db_order bb',
-                                            'on' => 'bb.order_id=aa.order_id',
-                                            'type' => 'inner'
-                                        ],
-                                        [
-                                            'table' => 'db_mall cc',
-                                            'on' => 'cc.mall_id=bb.mall_id',
-                                            'type' => 'inner'
-                                        ],
-                                        [
-                                            'table' => 'db_order_pembayaran dd',
-                                            'on' => 'dd.order_id=aa.order_id',
-                                            'type' => 'left'
-                                        ],
-                                    ],
-                                    'where' => [
-                                        'aa.order_id' => $parsing['db_order']->order_id,
-                                    ],
-                                    'order_by' => [
-                                        'dd.id' => 'desc'
-                                    ],
-                                ])->row();
+                    //             $sectionProductInformation['description'] = $parsing['db_order']->description;
+                    //             $items['sectionProductInformation'] = $sectionProductInformation;
 
-                                $parsing['firstItem'] = $this->api_model->select_data([
-                                    'field' => '
-                                    aa.*, bb.name as nama_produk, bb.quantity as qty, b.value,c.value as tkirim',
-                                    'table' => 'db_order aa',
-                                    'join' => [
-                                        [
-                                            'table' => 'db_order_product bb',
-                                            'on' => 'bb.order_id = aa.order_id',
-                                            'type' => 'inner'
-                                        ],
-                                        [
-                                            'table' => "(SELECT value,order_id FROM db_order_total where code='total') b",
-                                            'on' => 'b.order_id = aa.order_id',
-                                            'type' => 'inner'
-                                        ],
-                                        [
-                                            'table' => "(SELECT value,order_id FROM db_order_total where code='shipping') c",
-                                            'on' => 'c.order_id = aa.order_id',
-                                            'type' => 'inner'
-                                        ],
-                                        [
-                                            'table' => "db_product cc",
-                                            'on' => 'bb.product_id=cc.product_id',
-                                            'type' => 'inner'
-                                        ],
-                                        [
-                                            'table' => "db_product_description dd",
-                                            'on' => 'cc.product_id=dd.product_id',
-                                            'type' => 'inner'
-                                        ],
-                                    ],
-                                    'where' => [
-                                        'aa.order_id' => $parsing['db_order']->order_id,
-                                    ],
-                                ])->row();
+                    //             $sectionPriceInformation['price'] = $parsing['db_order']->price;
+                    //             $sectionPriceInformation['priceCurrencyFormat'] = rupiah($sectionPriceInformation['price']);
+                    //             $sectionPriceInformation['priceNego'] = $parsing['db_order']->price_nego;
+                    //             $sectionPriceInformation['priceNegoCurrencyFormat'] = rupiah($sectionPriceInformation['priceNego']);
+                    //             $sectionPriceInformation['priceZone'] = [
+                    //                 [
+                    //                     'price' => $parsing['db_order']->price1,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->price1)
+                    //                 ],
+                    //                 [
+                    //                     'price' => $parsing['db_order']->price2,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->price2)
+                    //                 ],
+                    //                 [
+                    //                     'price' => $parsing['db_order']->price3,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->price3)
+                    //                 ],
+                    //                 [
+                    //                     'price' => $parsing['db_order']->price4,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->price4)
+                    //                 ],
+                    //                 [
+                    //                     'price' => $parsing['db_order']->price5,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->price5)
+                    //                 ]
+                    //             ];
+                    //             $sectionPriceInformation['stock'] = $parsing['db_order']->stok_gudang;
+                    //             $sectionPriceInformation['ppn'] = [
+                    //                 [
+                    //                     'value' => '0',
+                    //                     'name' => 'No',
+                    //                     'isSelected' => ($parsing['db_order']->ppn > 0) ? false : true,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '1',
+                    //                     'name' => 'Yes',
+                    //                     'isSelected' => ($parsing['db_order']->ppn > 0) ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $items['sectionPriceInformation'] = $sectionPriceInformation;
 
-                                $eBast_tgl_buat = explode(' ', $parsing['db_order_bast']->tgl_buat);
-                                $eBast_business_type = (!empty($parsing['db_order_bast']->jenis_usaha)) ? "({$parsing['db_order_bast']->jenis_usaha})" : "";
-                                $orders['eBast'] = [
-                                    'date' => day_indo(date('D', strtotime($eBast_tgl_buat[0]))) . ', ' . date_indo($eBast_tgl_buat[0]),
-                                    'bastNumber' => $parsing['db_order_bast']->bast_no,
-                                    'firstParty' => [
-                                        'name' => $parsing['db_order_bast']->nama_pic,
-                                        'position' => $parsing['db_order_bast']->jabatan_pic,
-                                        'companyName' => $parsing['db_order_bast']->mall_name . $eBast_business_type,
-                                        'address' => $parsing['db_order_bast']->mall_address . ', ' . $parsing['db_order_bast']->mall_zone . ', ' . $parsing['db_order_bast']->mall_city . ', ' . $parsing['db_order_bast']->mall_province . ', ' . $parsing['db_order_bast']->mall_postcode,
-                                    ],
-                                    'secondParty' => [
-                                        'name' => $parsing['db_order_bast']->shipping_firstname,
-                                        'position' => 'Bendahara BOS',
-                                        'schoolName' => $parsing['db_order_bast']->shipping_company,
-                                        'address' => $parsing['db_order_bast']->shipping_address_2 . ', ' . $parsing['db_order_bast']->shipping_zone . ', ' . $parsing['db_order_bast']->shipping_kecamatan . ', ' . $parsing['db_order_bast']->shipping_city . ', ' . $parsing['db_order_bast']->shipping_province . ', ' . $parsing['db_order_bast']->shipping_postcode,
-                                        'phone' => (!empty($parsing['db_order_bast']->telephone)) ? $parsing['db_order_bast']->telephone : null,
-                                    ],
-                                    'shippingPriceCurrencyFormat' => rupiah($this->getOrderTotalType([
-                                        'id' => $parsing['db_order']->order_id,
-                                        'code' => 'shipping'
-                                    ])),
-                                    'totalPriceCurrencyFormat' => rupiah($this->getOrderTotalType([
-                                        'id' => $parsing['db_order']->order_id,
-                                        'code' => 'total'
-                                    ])),
-                                    'complaintCategory' => [
-                                        [
-                                            'value' => '1',
-                                            'name' => 'Kualitas Produk'
-                                        ],
-                                        [
-                                            'value' => '2',
-                                            'name' => 'Pembungkus'
-                                        ],
-                                        [
-                                            'value' => '3',
-                                            'name' => 'Pengiriman'
-                                        ],
-                                        [
-                                            'value' => '4',
-                                            'name' => 'Harga Produk'
-                                        ],
-                                        [
-                                            'value' => '5',
-                                            'name' => 'Respon Penjual'
-                                        ],
-                                    ]
-                                ];
-                            }
+                    //             $sectionMediaInformation['imagePrimary'] = (!empty($parsing['db_order']->image) || $parsing['db_order']->image != '') ? $this->core['url_image_product'] . $parsing['db_order']->image : $this->core['image_not_found'];
 
-                            $parsing['db_order_product'] = $this->api_model->select_data([
-                                'field' => '
-                                aa.order_product_id,
-                                aa.order_id,
-                                aa.product_id,
-                                aa.mall_id,
-                                aa.name,
-                                aa.model,
-                                aa.quantity,
-                                aa.id_nego,
-                                aa.id_banding,
-                                aa.price, 
-                                aa.total,
-                                aa.tax,
-                                aa.reward,
-                                aa.qty_terima_baik,
-                                aa.qty_terima_buruk,
-                                bb.price1,
-                                bb.price2,
-                                bb.price3,
-                                bb.price4,
-                                bb.price5,
-                                bb.grosir_price1,
-                                bb.grosir_price2,
-                                bb.grosir_price3,
-                                bb.grosir_price4,
-                                bb.grosir_min1,
-                                bb.grosir_min2,
-                                bb.grosir_min3,
-                                bb.grosir_min4,bb.ppn,
-                                bb.image,
-                                cc.seo,
-                                aa.note_terima',
-                                'table' => 'db_order_product aa',
-                                'join' => [
-                                    [
-                                        'table' => 'db_product bb',
-                                        'on' => 'bb.product_id=aa.product_id',
-                                        'type' => 'inner'
-                                    ],
-                                    [
-                                        'table' => 'db_product_description cc',
-                                        'on' => 'cc.product_id=bb.product_id',
-                                        'type' => 'inner'
-                                    ],
-                                ],
-                                'where' => [
-                                    'aa.order_id' => $parsing['db_order']->order_id,
-                                ],
-                            ])->result();
-                            $orders['items'] = [];
-                            foreach ($parsing['db_order_product'] as $key_db_order_product) {
-                                $items['id'] = $key_db_order_product->order_product_id;
-                                $items['productId'] = $key_db_order_product->product_id;
-                                $items['name'] = $key_db_order_product->name;
-                                $items['image'] = (!empty($key_db_order_product->image) || $key_db_order_product->image != '') ? $this->core['url_image_product'] . $key_db_order_product->image : $this->core['image_not_found'];
-                                $items['qty'] = $key_db_order_product->quantity;
-                                $items['amountGoodCondition'] = ($parsing['getBast']['setuju_terima'] == '1') ? $key_db_order_product->qty_terima_baik : null;
-                                $items['amountBadCondition'] = ($parsing['getBast']['setuju_terima'] == '1') ? $key_db_order_product->qty_terima_buruk : null;
-                                $items['price'] = $key_db_order_product->price;
-                                $items['priceCurrencyFormat'] = rupiah($items['price']);
-                                $items['totalPrice'] = $items['price'] * $items['qty'];
-                                $items['totalPriceCurrencyFormat'] = rupiah($items['totalPrice']);
-                                $items['note'] = (!empty($key_db_order_product->note_terima)) ? $key_db_order_product->note_terima : null;
+                    //             $parsing['db_product_image'] = $this->api_model->select_data([
+                    //                 'field' => '*',
+                    //                 'table' => 'db_product_image',
+                    //                 'where' => [
+                    //                     'product_id' => $parsing['db_order']->product_id
+                    //                 ]
+                    //             ])->result();
+                    //             $sectionMediaInformation['imageOther'] = [];
+                    //             foreach ($parsing['db_product_image'] as $key_db_product_image) {
+                    //                 $imageOther['value'] = $key_db_product_image->product_image_id;
+                    //                 $imageOther['image'] = (!empty($key_db_product_image->image) || $key_db_product_image->image != '') ? $this->core['url_image_product'] . $key_db_product_image->image : $this->core['image_not_found'];
 
-                                $orders['items'][] = $items;
-                            }
+                    //                 $sectionMediaInformation['imageOther'][] = $imageOther;
+                    //             }
+                    //             $items['sectionMediaInformation'] = $sectionMediaInformation;
 
-                            $parsing['db_order_total'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_order_total',
-                                'where' => [
-                                    'order_id' => $parsing['db_order']->order_id,
-                                ],
-                                'order_by' => [
-                                    'sort_order' => 'asc'
-                                ],
-                            ])->result();
-                            foreach ($parsing['db_order_total'] as $key_db_order_total) {
-                                if ($key_db_order_total->title != 'Biaya Tambahan') {
-                                    $orders['descriptionTotal'][] = [
-                                        $key_db_order_total->title, rupiah($key_db_order_total->value)
-                                    ];
-                                }
-                            }
+                    //             $sectionSpecInformation['pages'] = $parsing['db_order']->pages;
+                    //             $sectionSpecInformation['weight'] = $parsing['db_order']->weight;
+                    //             $sectionSpecInformation['dimension'] = [
+                    //                 'long' => $parsing['db_order']->p,
+                    //                 'wide' => $parsing['db_order']->l,
+                    //                 'high' => $parsing['db_order']->t,
+                    //             ];
+                    //             $sectionSpecInformation['condition'] = [
+                    //                 [
+                    //                     'value' => 'Baru',
+                    //                     'name' => 'Baru',
+                    //                     'isSelected' => ($parsing['db_order']->kondisi == 'Baru') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Bekas',
+                    //                     'name' => 'Bekas',
+                    //                     'isSelected' => ($parsing['db_order']->kondisi == 'Bekas') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['status'] = [
+                    //                 [
+                    //                     'value' => '0',
+                    //                     'name' => 'Disable',
+                    //                     'isSelected' => ($parsing['db_order']->status == '0') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '1',
+                    //                     'name' => 'Enable',
+                    //                     'isSelected' => ($parsing['db_order']->status == '1') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['contentPaper'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Jenis Kertas Isi',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_isi == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HVS 70',
+                    //                     'name' => 'HVS 70',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_isi == 'HVS 70') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HVS 80',
+                    //                     'name' => 'HVS 80',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_isi == 'HVS 80') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HVS 100',
+                    //                     'name' => 'HVS 100',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_isi == 'HVS 100') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['coverPaper'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Jenis Kertas Cover',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_cover == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Art Carton 210',
+                    //                     'name' => 'Art Carton 210',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_cover == 'Art Carton 210') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HVS 70',
+                    //                     'name' => 'HVS 70',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_cover == 'HVS 70') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HVS 80',
+                    //                     'name' => 'HVS 80',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_cover == 'HVS 80') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HVS 100',
+                    //                     'name' => 'HVS 100',
+                    //                     'isSelected' => ($parsing['db_order']->kertas_cover == 'HVS 100') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['fillColor'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Jenis Warna Isi',
+                    //                     'isSelected' => ($parsing['db_order']->warna_isi == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Full Color',
+                    //                     'name' => 'Full Color',
+                    //                     'isSelected' => ($parsing['db_order']->warna_isi == 'Full Color') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Black White',
+                    //                     'name' => 'Black White',
+                    //                     'isSelected' => ($parsing['db_order']->warna_isi == 'Black White') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['coverColor'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Jenis Warna Cover',
+                    //                     'isSelected' => ($parsing['db_order']->warna_cover == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Full Color',
+                    //                     'name' => 'Full Color',
+                    //                     'isSelected' => ($parsing['db_order']->warna_cover == 'Full Color') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Black White',
+                    //                     'name' => 'Black White',
+                    //                     'isSelected' => ($parsing['db_order']->warna_cover == 'Black White') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['finishing'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Jenis Finishing',
+                    //                     'isSelected' => ($parsing['db_order']->finishing == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'UV Varnish',
+                    //                     'name' => 'UV Varnish',
+                    //                     'isSelected' => ($parsing['db_order']->finishing == 'UV Varnish') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Laminating',
+                    //                     'name' => 'Laminating',
+                    //                     'isSelected' => ($parsing['db_order']->finishing == 'Laminating') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Hard Cover',
+                    //                     'name' => 'Hard Cover',
+                    //                     'isSelected' => ($parsing['db_order']->finishing == 'Hard Cover') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Embos',
+                    //                     'name' => 'Embos',
+                    //                     'isSelected' => ($parsing['db_order']->finishing == 'Embos') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['binding'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Jenis Jilid',
+                    //                     'isSelected' => ($parsing['db_order']->penjilidan == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Perfect Binding',
+                    //                     'name' => 'Perfect Binding',
+                    //                     'isSelected' => ($parsing['db_order']->penjilidan == 'Perfect Binding') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Spiral',
+                    //                     'name' => 'Spiral',
+                    //                     'isSelected' => ($parsing['db_order']->penjilidan == 'Spiral') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Jahit benang',
+                    //                     'name' => 'Jahit benang',
+                    //                     'isSelected' => ($parsing['db_order']->penjilidan == 'Jahit benang') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $items['sectionSpecInformation'] = $sectionSpecInformation;
+                    //         } else {
+                    //             $sectionProductInformation['name'] = $parsing['db_order']->name;
+                    //             $sectionProductInformation['slug'] = $parsing['db_order']->seo;
+                    //             $sectionProductInformation['skKelulusan'] = $parsing['db_order']->sk_kelulusan;
+                    //             $sectionProductInformation['sku'] = $parsing['db_order']->model;
+                    //             $sectionProductInformation['isbn'] = $parsing['db_order']->isbn;
 
-                            $orders['paymentMethodSelected'] = (object) [];
+                    //             $sectionProductInformation['class'] = [];
+                    //             for ($iClass = 1; $iClass <= 12; $iClass++) {
+                    //                 $sectionProductInformation['class'][] = [
+                    //                     'value' => $iClass,
+                    //                     'name' => $iClass,
+                    //                     'isSelected' => ($iClass == $parsing['db_order']->kelas) ? true : false,
+                    //                 ];
+                    //             }
 
-                            $orders['paymentMethod'] = [
-                                [
-                                    'group' => 'Virtual Account',
-                                    'items' => [
-                                        [
-                                            'value' => 'bank_mandiri_va',
-                                            'name' => 'Virtual Account Mandiri',
-                                            'isSelected' => ($parsing['db_order']->payment_method == 'bank_mandiri_va') ? true : false,
-                                        ],
-                                    ]
-                                ]
-                            ];
+                    //             $sectionProductInformation['semester'] = [];
+                    //             for ($iSemester = 1; $iSemester <= 6; $iSemester++) {
+                    //                 $sectionProductInformation['semester'][] = [
+                    //                     'value' => $iSemester,
+                    //                     'name' => $iSemester,
+                    //                     'isSelected' => ($iSemester == $parsing['db_order']->semester) ? true : false,
+                    //                 ];
+                    //             }
 
-                            if ($parsing['db_order']->mall_name == 'EUREKA TRIAL') {
-                                $orders['paymentMethod'][0]['items'][] = [
-                                    'value' => 'bank_bri_va',
-                                    'name' => 'Virtual Account BRI (BRIVA)',
-                                    'isSelected' => ($parsing['db_order']->payment_method == 'bank_bri_va') ? true : false,
-                                ];
-                            }
+                    //             $parsing['getFullCategory'] = $this->api_model->select_data([
+                    //                 'field' => 'db_product_to_category.*, db_category.parent_id',
+                    //                 'table' => 'db_product_to_category',
+                    //                 'join' => [
+                    //                     [
+                    //                         'table' => 'db_category',
+                    //                         'on' => 'db_category.category_id=db_product_to_category.category_id',
+                    //                         'type' => 'inner'
+                    //                     ],
+                    //                 ],
+                    //                 'where' => [
+                    //                     'product_id' => $parsing['db_order']->product_id
+                    //                 ],
+                    //                 'order_by' => [
+                    //                     'db_category.parent_id' => 'ASC'
+                    //                 ]
+                    //             ])->result();
+                    //             $sectionProductInformation['category'] = [];
+                    //             $sectionProductInformation['categoryChildren'] = [];
+                    //             foreach ($parsing['getFullCategory'] as $key_getFullCategory) {
+                    //                 $parentId = '';
+                    //                 if ($key_getFullCategory->parent_id == '0') {
+                    //                     $parentId = $key_getFullCategory->category_id;
 
-                            if ($parsing['db_order']->payment_method == 'bank_mandiri_va') {
-                                $orders['paymentMethodSelected'] = [
-                                    'label' => 'Virtual Account Mandiri',
-                                    'value' => 'bank_mandiri_va'
-                                ];
-                            } elseif ($parsing['db_order']->payment_method == 'bank_bri_va') {
-                                $orders['paymentMethodSelected'] = [
-                                    'label' => 'Virtual Account BRI (BRIVA)',
-                                    'value' => 'bank_bri_va'
-                                ];
-                            }
+                    //                     $parsing['db_category'] = $this->api_model->select_data([
+                    //                         'field' => 'aa.category_id,bb.name as nama_kategori,aa.status',
+                    //                         'table' => 'db_category aa',
+                    //                         'join' => [
+                    //                             [
+                    //                                 'table' => 'db_category_description bb',
+                    //                                 'on' => 'aa.category_id=bb.category_id',
+                    //                                 'type' => 'inner'
+                    //                             ],
+                    //                         ],
+                    //                         'where' => [
+                    //                             'aa.status' => '1',
+                    //                             'aa.parent_id' => '0'
+                    //                         ]
+                    //                     ])->result();
+                    //                     foreach ($parsing['db_category'] as $key_db_category) {
+                    //                         $category['value'] = $key_db_category->category_id;
+                    //                         $category['name'] = $key_db_category->nama_kategori;
+                    //                         $category['isSelected'] = ($key_db_category->category_id == $key_getFullCategory->category_id) ? true : false;
 
-                            $parsing['db_bank'] = $this->api_model->select_data([
-                                'field' => '*',
-                                'table' => 'db_bank',
-                                'where' => [
-                                    'status' => '1',
-                                ]
-                            ])->result();
-                            $orders['paymentMethod'][] = [
-                                'group' => 'Bank Transfer',
-                                'items' => []
-                            ];
-                            foreach ($parsing['db_bank'] as $key_db_bank) {
-                                if ($key_db_bank->slug != 'bank_mandiri_va') {
-                                    $orders['paymentMethod'][1]['items'][] = [
-                                        'value' => $key_db_bank->slug,
-                                        'name' => $key_db_bank->bank,
-                                        'isSelected' => ($parsing['db_order']->payment_method == $key_db_bank->slug) ? true : false,
-                                    ];
+                    //                         $sectionProductInformation['category'][] = $category;
+                    //                     }
+                    //                 } else {
+                    //                     $parsing['db_category_children'] = $this->api_model->select_data([
+                    //                         'field' => 'aa.category_id,bb.name as nama_kategori,aa.status',
+                    //                         'table' => 'db_category aa',
+                    //                         'join' => [
+                    //                             [
+                    //                                 'table' => 'db_category_description bb',
+                    //                                 'on' => 'aa.category_id=bb.category_id',
+                    //                                 'type' => 'inner'
+                    //                             ],
+                    //                         ],
+                    //                         'where' => [
+                    //                             'aa.status' => '1',
+                    //                             'aa.parent_id' => $parentId
+                    //                         ]
+                    //                     ])->result();
+                    //                     foreach ($parsing['db_category_children'] as $key_db_category_children) {
+                    //                         $categoryChildren['value'] = $key_db_category_children->category_id;
+                    //                         $categoryChildren['name'] = $key_db_category_children->nama_kategori;
+                    //                         $categoryChildren['isSelected'] = ($key_db_category_children->category_id == $key_getFullCategory->category_id) ? true : false;
 
-                                    if ($parsing['db_order']->payment_method == $key_db_bank->slug) {
-                                        $orders['paymentMethodSelected'] = [
-                                            'label' => $key_db_bank->bank,
-                                            'value' => $key_db_bank->slug
-                                        ];
-                                    }
-                                }
-                            }
+                    //                         $sectionProductInformation['categoryChildren'][] = $categoryChildren;
+                    //                     }
+                    //                 }
+                    //             }
 
-                            $output = $orders;
-                        }
+                    //             $parsing['db_manufacturer'] = $this->api_model->select_data([
+                    //                 'field' => '*',
+                    //                 'table' => 'db_manufacturer',
+                    //                 'order_by' => [
+                    //                     'name' => 'ASC'
+                    //                 ]
+                    //             ])->result();
+                    //             $sectionProductInformation['manufacturer'] = [];
+                    //             foreach ($parsing['db_manufacturer'] as $key_db_manufacturer) {
+                    //                 $manufacturer['value'] = $key_db_manufacturer->manufacturer_id;
+                    //                 $manufacturer['name'] = $key_db_manufacturer->name;
+                    //                 $manufacturer['isSelected'] = ($key_db_manufacturer->manufacturer_id == $parsing['db_order']->manufacturer_id) ? true : false;
 
-                        $response = $this->formatter([
-                            'code' => $code,
-                            'message' => 'get data success',
-                            'data' => $output
-                        ]);
-                    }
+                    //                 $sectionProductInformation['manufacturer'][] = $manufacturer;
+                    //             }
+
+                    //             $sectionProductInformation['description'] = $parsing['db_order']->description;
+                    //             $items['sectionProductInformation'] = $sectionProductInformation;
+
+                    //             $sectionPriceInformation['isPriceGrosirActive'] = (array_sum([
+                    //                 $parsing['db_order']->grosir_price1,
+                    //                 $parsing['db_order']->grosir_price2,
+                    //                 $parsing['db_order']->grosir_price3,
+                    //                 $parsing['db_order']->grosir_price4
+                    //             ]) > 0) ? true : false;
+                    //             $sectionPriceInformation['price'] = $parsing['db_order']->price;
+                    //             $sectionPriceInformation['priceCurrencyFormat'] = rupiah($sectionPriceInformation['price']);
+                    //             $sectionPriceInformation['priceNego'] = $parsing['db_order']->price_nego;
+                    //             $sectionPriceInformation['priceNegoCurrencyFormat'] = rupiah($sectionPriceInformation['priceNego']);
+                    //             $sectionPriceInformation['priceGrosir'] = [
+                    //                 [
+                    //                     'min' => $parsing['db_order']->grosir_min1,
+                    //                     'price' => $parsing['db_order']->grosir_price1,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->grosir_price1),
+                    //                 ],
+                    //                 [
+                    //                     'min' => $parsing['db_order']->grosir_min2,
+                    //                     'price' => $parsing['db_order']->grosir_price2,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->grosir_price2),
+                    //                 ],
+                    //                 [
+                    //                     'min' => $parsing['db_order']->grosir_min3,
+                    //                     'price' => $parsing['db_order']->grosir_price3,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->grosir_price3),
+                    //                 ],
+                    //                 [
+                    //                     'min' => $parsing['db_order']->grosir_min4,
+                    //                     'price' => $parsing['db_order']->grosir_price4,
+                    //                     'priceCurrencyFormat' => rupiah($parsing['db_order']->grosir_price4),
+                    //                 ],
+                    //             ];
+                    //             $sectionPriceInformation['unitType'] = [
+                    //                 [
+                    //                     'value' => 'Centimeter',
+                    //                     'name' => 'Centimeter',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Centimeter') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Gram',
+                    //                     'name' => 'Gram',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Gram') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Inch',
+                    //                     'name' => 'Inch',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Inch') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Kilogram',
+                    //                     'name' => 'Kilogram',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Kilogram') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Liter',
+                    //                     'name' => 'Liter',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Liter') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Milligram',
+                    //                     'name' => 'Milligram',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Milligram') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Milliliter',
+                    //                     'name' => 'Milliliter',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Milliliter') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Meter',
+                    //                     'name' => 'Meter',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Meter') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'm³',
+                    //                     'name' => 'm³',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'm³') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Lusin',
+                    //                     'name' => 'Lusin',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Lusin') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Kodi',
+                    //                     'name' => 'Kodi',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Kodi') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Gross',
+                    //                     'name' => 'Gross',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Gross') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Rim',
+                    //                     'name' => 'Rim',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Rim') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Box',
+                    //                     'name' => 'Box',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Box') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Roll',
+                    //                     'name' => 'Roll',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Roll') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Set',
+                    //                     'name' => 'Set',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Set') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Unit',
+                    //                     'name' => 'Unit',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Unit') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Pcs',
+                    //                     'name' => 'Pcs',
+                    //                     'isSelected' => ($parsing['db_order']->unit_type == 'Pcs') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionPriceInformation['ppn'] = [
+                    //                 [
+                    //                     'value' => '0',
+                    //                     'name' => 'No',
+                    //                     'isSelected' => ($parsing['db_order']->ppn > 0) ? false : true,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '1',
+                    //                     'name' => 'Yes',
+                    //                     'isSelected' => ($parsing['db_order']->ppn > 0) ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $items['sectionPriceInformation'] = $sectionPriceInformation;
+
+                    //             $sectionMediaInformation['imagePrimary'] = (!empty($parsing['db_order']->image) || $parsing['db_order']->image != '') ? $this->core['url_image_product'] . $parsing['db_order']->image : $this->core['image_not_found'];
+
+                    //             $parsing['db_product_image'] = $this->api_model->select_data([
+                    //                 'field' => '*',
+                    //                 'table' => 'db_product_image',
+                    //                 'where' => [
+                    //                     'product_id' => $parsing['db_order']->product_id
+                    //                 ]
+                    //             ])->result();
+                    //             $sectionMediaInformation['imageOther'] = [];
+                    //             foreach ($parsing['db_product_image'] as $key_db_product_image) {
+                    //                 $imageOther['value'] = $key_db_product_image->product_image_id;
+                    //                 $imageOther['image'] = (!empty($key_db_product_image->image) || $key_db_product_image->image != '') ? $this->core['url_image_product'] . $key_db_product_image->image : $this->core['image_not_found'];
+
+                    //                 $sectionMediaInformation['imageOther'][] = $imageOther;
+                    //             }
+                    //             $items['sectionMediaInformation'] = $sectionMediaInformation;
+
+                    //             $sectionSpecInformation['condition'] = [
+                    //                 [
+                    //                     'value' => 'Baru',
+                    //                     'name' => 'Baru',
+                    //                     'isSelected' => ($parsing['db_order']->kondisi == 'Baru') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Bekas',
+                    //                     'name' => 'Bekas',
+                    //                     'isSelected' => ($parsing['db_order']->kondisi == 'Bekas') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['stock'] = $parsing['db_order']->stok_gudang;
+                    //             $sectionSpecInformation['warranty'] = [
+                    //                 [
+                    //                     'value' => 'Garansi Toko',
+                    //                     'name' => 'Garansi Toko',
+                    //                     'isSelected' => ($parsing['db_order']->garansi == 'Garansi Toko') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Garansi Distributor',
+                    //                     'name' => 'Garansi Distributor',
+                    //                     'isSelected' => ($parsing['db_order']->garansi == 'Garansi Distributor') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Garansi Resmi Nasional',
+                    //                     'name' => 'Garansi Resmi Nasional',
+                    //                     'isSelected' => ($parsing['db_order']->garansi == 'Garansi Resmi Nasional') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Garansi Global',
+                    //                     'name' => 'Garansi Global',
+                    //                     'isSelected' => ($parsing['db_order']->garansi == 'Garansi Global') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['weight'] = $parsing['db_order']->weight;
+                    //             $sectionSpecInformation['dimension'] = [
+                    //                 'long' => $parsing['db_order']->p,
+                    //                 'wide' => $parsing['db_order']->l,
+                    //                 'high' => $parsing['db_order']->t,
+                    //             ];
+                    //             $sectionSpecInformation['status'] = [
+                    //                 [
+                    //                     'value' => '0',
+                    //                     'name' => 'Disable',
+                    //                     'isSelected' => ($parsing['db_order']->status == '0') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '1',
+                    //                     'name' => 'Enable',
+                    //                     'isSelected' => ($parsing['db_order']->status == '1') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['processor'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Type Processor',
+                    //                     'isSelected' => ($parsing['db_order']->processor == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Intel Core i3',
+                    //                     'name' => 'Intel Core i3',
+                    //                     'isSelected' => ($parsing['db_order']->processor == 'Intel Core i3') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Intel Core i5',
+                    //                     'name' => 'Intel Core i5',
+                    //                     'isSelected' => ($parsing['db_order']->processor == 'Intel Core i5') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Intel Core i7',
+                    //                     'name' => 'Intel Core i7',
+                    //                     'isSelected' => ($parsing['db_order']->processor == 'Intel Core i7') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['memory'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Type Memory RAM',
+                    //                     'isSelected' => ($parsing['db_order']->memory == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '4 GB',
+                    //                     'name' => '4 GB',
+                    //                     'isSelected' => ($parsing['db_order']->memory == '4 GB') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '8 GB',
+                    //                     'name' => '8 GB',
+                    //                     'isSelected' => ($parsing['db_order']->memory == '8 GB') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '16 GB',
+                    //                     'name' => '16 GB',
+                    //                     'isSelected' => ($parsing['db_order']->memory == '16 GB') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['harddisk'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Type Hard Disk',
+                    //                     'isSelected' => ($parsing['db_order']->harddisk == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HDD 500 GB',
+                    //                     'name' => 'HDD 500 GB',
+                    //                     'isSelected' => ($parsing['db_order']->harddisk == 'HDD 500 GB') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'HDD 1 TB',
+                    //                     'name' => 'HDD 1 TB',
+                    //                     'isSelected' => ($parsing['db_order']->harddisk == 'HDD 1 TB') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'SSD 120 GB',
+                    //                     'name' => 'SSD 120 GB',
+                    //                     'isSelected' => ($parsing['db_order']->harddisk == 'SSD 120 GB') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'SSD 250 GB',
+                    //                     'name' => 'SSD 250 GB',
+                    //                     'isSelected' => ($parsing['db_order']->harddisk == 'SSD 250 GB') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'SSD 500 GB',
+                    //                     'name' => 'SSD 500 GB',
+                    //                     'isSelected' => ($parsing['db_order']->harddisk == 'SSD 500 GB') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['cdDvd'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Type DVD/CD',
+                    //                     'isSelected' => ($parsing['db_order']->cd_dvd == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Non',
+                    //                     'name' => 'Non',
+                    //                     'isSelected' => ($parsing['db_order']->cd_dvd == 'Non') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'DVD',
+                    //                     'name' => 'DVD',
+                    //                     'isSelected' => ($parsing['db_order']->cd_dvd == 'DVD') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'CD',
+                    //                     'name' => 'CD',
+                    //                     'isSelected' => ($parsing['db_order']->cd_dvd == 'CD') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['monitor'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Type Monitor',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '10',
+                    //                     'name' => '10',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '10') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '11',
+                    //                     'name' => '11',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '11') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '12',
+                    //                     'name' => '12',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '12') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '13',
+                    //                     'name' => '13',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '13') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '15',
+                    //                     'name' => '15',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '15') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '19',
+                    //                     'name' => '19',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '19') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '20',
+                    //                     'name' => '20',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '20') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '22',
+                    //                     'name' => '22',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '22') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => '24',
+                    //                     'name' => '24',
+                    //                     'isSelected' => ($parsing['db_order']->monitor == '24') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['os'] = [
+                    //                 [
+                    //                     'value' => '',
+                    //                     'name' => 'Pilih Type OS',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == '') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'DOS',
+                    //                     'name' => 'DOS',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'DOS') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Windows',
+                    //                     'name' => 'Windows',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'Windows') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Linux',
+                    //                     'name' => 'Linux',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'Linux') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Unix',
+                    //                     'name' => 'Unix',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'Unix') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'MacOS',
+                    //                     'name' => 'MacOS',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'MacOS') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'Android',
+                    //                     'name' => 'Android',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'Android') ? true : false,
+                    //                 ],
+                    //                 [
+                    //                     'value' => 'iOS',
+                    //                     'name' => 'iOS',
+                    //                     'isSelected' => ($parsing['db_order']->sistem_operasi == 'iOS') ? true : false,
+                    //                 ],
+                    //             ];
+                    //             $sectionSpecInformation['installedApplication'] = $parsing['db_order']->aplikasi_terpasang;
+                    //             $items['sectionSpecInformation'] = $sectionSpecInformation;
+                    //         }
+
+                    //         $output = $items;
+                    //     }
+
+                    //     $response = $this->formatter([
+                    //         'code' => $code,
+                    //         'message' => 'get data success',
+                    //         'data' => $output
+                    //     ]);
+                    // }
                 }
             }
         }
@@ -745,731 +1350,155 @@ class Order extends MY_Controller
         $this->response($response['result'], $response['status']);
     }
 
-    public function cancel_put()
+    public function billing_get()
     {
         if (!empty($this->auth())) {
             $response = $this->auth();
         } else {
             $checking = true;
 
-            if (empty($this->core['customer'])) {
+            if (empty($this->core['seller'])) {
                 $checking = false;
                 $response = $this->formatter([
                     'code' => self::HTTP_UNAUTHORIZED,
                     'message' => 'unauthorized',
                 ]);
             } else {
-                if (!$this->put()) {
+                $column = $this->configBilling()['column'];
+
+                if ($this->get('page') == null || $this->get('limit') == null) {
                     $checking = false;
                     $response = $this->formatter([
                         'code' => self::HTTP_BAD_REQUEST,
-                        'message' => 'bad request',
+                        'message' => 'page or limit not found',
+                        'data' => [
+                            'total' => 0,
+                            'items' => [],
+                            'column' => $column,
+                        ]
                     ]);
                 } else {
-                    $check['db_order'] = $this->api_model->select_data([
-                        'field' => '*',
-                        'table' => 'db_order',
-                        'where' => [
-                            'order_id' => $this->put('orderId'),
-                        ]
-                    ])->row();
-
-                    if (empty($check['db_order'])) {
+                    if ($this->get('page') < 1 || $this->get('limit') < 1) {
                         $checking = false;
                         $response = $this->formatter([
-                            'code' => self::HTTP_NOT_FOUND,
-                            'message' => 'data not found',
-                        ]);
-                    }
-                }
-            }
-
-            if ($checking === true) {
-                $query = $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId'),
-                    ],
-                    'data' => [
-                        'order_status_id' => '7'
-                    ],
-                    'table' => 'db_order'
-                ]);
-
-                if ($query['error'] === true) {
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => "edit data failed [{$query['system']}]",
-                    ]);
-                } else {
-                    $response = $this->formatter([
-                        'code' => self::HTTP_OK,
-                        'message' => "edit data success",
-                    ]);
-                }
-            }
-        }
-
-        $this->response($response['result'], $response['status']);
-    }
-
-    public function accept_put()
-    {
-        if (!empty($this->auth())) {
-            $response = $this->auth();
-        } else {
-            $checking = true;
-
-            if (empty($this->core['customer'])) {
-                $checking = false;
-                $response = $this->formatter([
-                    'code' => self::HTTP_UNAUTHORIZED,
-                    'message' => 'unauthorized',
-                ]);
-            } else {
-                if (!$this->put()) {
-                    $checking = false;
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => 'bad request',
-                    ]);
-                } else {
-                    $check['db_order'] = $this->api_model->select_data([
-                        'field' => '*',
-                        'table' => 'db_order',
-                        'where' => [
-                            'order_id' => $this->put('orderId')
-                        ]
-                    ])->row_array();
-                    if (empty($check['db_order'])) {
-                        $checking = false;
-                        $response = $this->formatter([
-                            'code' => self::HTTP_NOT_FOUND,
-                            'message' => 'data not found',
-                        ]);
-                    } else {
-                        if ($check['db_order']['order_status_id'] == '17' || $check['db_order']['order_status_id'] == '19') {
-                            $checking = false;
-                            $response = $this->formatter([
-                                'code' => self::HTTP_CONFLICT,
-                                'message' => 'order has answered',
-                            ]);
-                        } else {
-                            $getOrder = json_decode(shoot_api([
-                                'url' => base_url() . "order/{$this->put('orderId')}",
-                                'method' => 'GET',
-                                'header' => [
-                                    "Authorization: {$this->input->request_headers()['Authorization']}"
-                                ],
-                            ]), true);
-                            if ($getOrder['status']['code'] !== 200) {
-                                $checking = false;
-                                $response = $this->formatter([
-                                    'code' => $getOrder['status']['code'],
-                                    'message' => $getOrder['status']['message']
-                                ]);
-                            } else {
-                                $eBast = $this->put('eBast');
-                                $iEbast = 0;
-                                foreach ($getOrder['data']['items'] as $key_getOrder) {
-                                    $amount = $eBast[$iEbast]['amountGoodCondition'] + $eBast[$iEbast]['amountBadCondition'];
-                                    if ($key_getOrder['qty'] != $amount) {
-                                        $checking = false;
-                                        $response = $this->formatter([
-                                            'code' => self::HTTP_BAD_REQUEST,
-                                            'message' => 'amount is not same',
-                                        ]);
-                                    }
-
-                                    $iEbast++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if ($checking === true) {
-                $parsing['getMall'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_mall',
-                    'where' => [
-                        'mall_id' => $check['db_order']['mall_id']
-                    ]
-                ])->row_array();
-
-                $this->db->trans_start();
-
-                $iEbast = 0;
-                foreach ($getOrder['data']['items'] as $key_getOrder) {
-                    $this->api_model->send_data([
-                        'where' => [
-                            'order_id' => $this->put('orderId'),
-                            'order_product_id' => $key_getOrder['id'],
-                        ],
-                        'data' => [
-                            'qty_terima_baik' => $eBast[$iEbast]['amountGoodCondition'],
-                            'qty_terima_buruk' => $eBast[$iEbast]['amountBadCondition'],
-                            'note_terima' => $eBast[$iEbast]['note'],
-                        ],
-                        'table' => 'db_order_product'
-                    ]);
-
-                    $iEbast++;
-                }
-
-                $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId')
-                    ],
-                    'data' => [
-                        'order_status_id' => 17
-                    ],
-                    'table' => 'db_order'
-                ]);
-
-                $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId')
-                    ],
-                    'data' => [
-                        'setuju_terima' => 1
-                    ],
-                    'table' => 'db_order_bast'
-                ]);
-
-                $this->api_model->send_data([
-                    'data' => [
-                        'order_id' => $this->put('orderId'),
-                        'order_status_id' => 5,
-                        'notify' => 0,
-                        'comment' => 'Pembeli telah menerima pemesanan dengan baik',
-                        'date_added' => date('Y-m-d H:i:s'),
-                    ],
-                    'table' => 'db_order_history'
-                ]);
-
-                $this->db->trans_complete();
-
-                if ($this->db->trans_status() === false) {
-                    $db_error = $this->db->error();
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => "edit data failed [Database error! Error Code [{$db_error['code']}] Error: {$db_error['message']}]",
-                    ]);
-                } else {
-                    $mailing = $this->mailingWithNotif([
-                        'subject' => 'Pesanan diterima oleh pembeli',
-                        'message' => "Pesanan dengan kode pesanan {$check['db_order']['invoice_no']} telah diterima oleh pembeli",
-                        'to' => [
-                            $parsing['getMall']['email']
-                        ],
-                        'mallId' => $check['db_order']['mall_id'],
-                        'linkId' => $this->put('orderId'),
-                        'type' => 'order',
-                        'dataInvoice' => [
-                            'invoiceNumber' => $getOrder['data']['invoice'],
-                            'items' => $getOrder['data']['items'],
-                            'descriptionTotal' => $getOrder['data']['descriptionTotal'],
-                        ]
-                    ]);
-
-                    $response = $this->formatter([
-                        'code' => self::HTTP_OK,
-                        'message' => "edit data success",
-                        'mailing' => $mailing,
-                    ]);
-                }
-            }
-        }
-
-        $this->response($response['result'], $response['status']);
-    }
-
-    public function penalty_put()
-    {
-        if (!empty($this->auth())) {
-            $response = $this->auth();
-        } else {
-            $checking = true;
-
-            if (empty($this->core['customer'])) {
-                $checking = false;
-                $response = $this->formatter([
-                    'code' => self::HTTP_UNAUTHORIZED,
-                    'message' => 'unauthorized',
-                ]);
-            } else {
-                if (!$this->put()) {
-                    $checking = false;
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => 'bad request',
-                    ]);
-                } else {
-                    $check['db_order'] = $this->api_model->select_data([
-                        'field' => '*',
-                        'table' => 'db_order',
-                        'where' => [
-                            'order_id' => $this->put('orderId')
-                        ]
-                    ])->row_array();
-                    if (empty($check['db_order'])) {
-                        $checking = false;
-                        $response = $this->formatter([
-                            'code' => self::HTTP_NOT_FOUND,
-                            'message' => 'data not found',
-                        ]);
-                    }
-                }
-            }
-
-            if ($checking === true) {
-                $parsing['getMall'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_mall',
-                    'where' => [
-                        'mall_id' => $check['db_order']['mall_id']
-                    ]
-                ])->row_array();
-                $parsing['getTotalPenalty'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_order_total',
-                    'where' => [
-                        'order_id' => $this->put('orderId'),
-                        'code' => 'denda',
-                    ]
-                ])->row_array();
-
-                $parsing['getAllTotal'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_order_total',
-                    'where' => [
-                        'order_id' => $this->put('orderId'),
-                        'code !=' => 'total',
-                    ]
-                ])->result();
-                $getAllTotal = [];
-                foreach ($parsing['getAllTotal'] as $key_getAllTotal) {
-                    $getAllTotal[] = $key_getAllTotal->value;
-                }
-
-                $this->db->trans_start();
-
-                $penaltyDay = $this->put('penaltyDay');
-                $penaltyPrice = $this->put('penaltyPrice');
-                $totalPenalty = $penaltyPrice * $penaltyDay;
-
-                $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId')
-                    ],
-                    'data' => [
-                        'denda_hari' => $penaltyDay,
-                        'denda_bayar' => $totalPenalty,
-                        'denda_date' => date('Y-m-d H:i:s'),
-                    ],
-                    'table' => 'db_order'
-                ]);
-
-                $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId'),
-                        'code' => 'total',
-                    ],
-                    'data' => [
-                        'value' => (array_sum($getAllTotal) + $totalPenalty) - $parsing['getTotalPenalty']['value'],
-                    ],
-                    'table' => 'db_order_total'
-                ]);
-
-                if (!empty($parsing['getTotalPenalty'])) {
-                    $this->api_model->send_data([
-                        'where' => [
-                            'order_total_id' => $parsing['getTotalPenalty']['order_total_id']
-                        ],
-                        'data' => [
-                            'value' => $totalPenalty,
-                        ],
-                        'table' => 'db_order_total'
-                    ]);
-                } else {
-                    $this->api_model->send_data([
-                        'data' => [
-                            'order_id' => $this->put('orderId'),
-                            'code' => 'denda',
-                            'title' => 'Denda',
-                            'value' => $totalPenalty,
-                            'sort_order' => '5',
-                        ],
-                        'table' => 'db_order_total'
-                    ]);
-                }
-
-                $this->db->trans_complete();
-
-                if ($this->db->trans_status() === false) {
-                    $db_error = $this->db->error();
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => "edit data failed [Database error! Error Code [{$db_error['code']}] Error: {$db_error['message']}]",
-                    ]);
-                } else {
-                    $getOrder = json_decode(shoot_api([
-                        'url' => base_url() . "order/{$this->put('orderId')}",
-                        'method' => 'GET',
-                        'header' => [
-                            "Authorization: {$this->input->request_headers()['Authorization']}"
-                        ],
-                    ]), true);
-                    if ($getOrder['status']['code'] !== 200) {
-                        $mailing = false;
-                    } else {
-                        $mailing = $this->mailingWithNotif([
-                            'subject' => 'Pembeli mengajukan denda',
-                            'message' => "Pembeli telah mengajukan denda untuk kode pesanan {$check['db_order']['invoice_no']} dikarenakan keterlambatan pengiriman barang",
-                            'to' => [
-                                $parsing['getMall']['email']
-                            ],
-                            'mallId' => $check['db_order']['mall_id'],
-                            'linkId' => $this->put('orderId'),
-                            'type' => 'order',
-                            'dataInvoice' => [
-                                'invoiceNumber' => $getOrder['data']['invoice'],
-                                'items' => $getOrder['data']['items'],
-                                'descriptionTotal' => $getOrder['data']['descriptionTotal'],
+                            'code' => self::HTTP_BAD_REQUEST,
+                            'message' => 'value must more than 1',
+                            'data' => [
+                                'total' => 0,
+                                'items' => [],
+                                'column' => $column,
                             ]
                         ]);
                     }
-
-                    $response = $this->formatter([
-                        'code' => self::HTTP_OK,
-                        'message' => "edit data success",
-                        'mailing' => $mailing,
-                    ]);
                 }
-            }
-        }
 
-        $this->response($response['result'], $response['status']);
-    }
+                if ($checking === true) {
+                    $param['db_order_penagihan']['field'] = 'pg.id,pg.order_id,pg.invoice_no,cs.firstname,cs.lastname,pg.tgl_penagihan,pg.tgl_bayar,pg.tgl_created';
+                    $param['db_order_penagihan']['table'] = 'db_order_penagihan pg';
+                    $param['db_order_penagihan']['join'] = [
+                        [
+                            'table' => 'db_customer cs',
+                            'on' => 'cs.customer_id=pg.customer_id',
+                            'type' => 'inner'
+                        ],
+                    ];
 
-    public function refuse_put()
-    {
-        if (!empty($this->auth())) {
-            $response = $this->auth();
-        } else {
-            $checking = true;
+                    $param['db_order_penagihan']['where'] = [
+                        'pg.mall_id' => $this->core['seller']['id'],
+                    ];
 
-            if (empty($this->core['customer'])) {
-                $checking = false;
-                $response = $this->formatter([
-                    'code' => self::HTTP_UNAUTHORIZED,
-                    'message' => 'unauthorized',
-                ]);
-            } else {
-                if (!$this->put()) {
-                    $checking = false;
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => 'bad request',
-                    ]);
-                } else {
-                    $check['db_order'] = $this->api_model->select_data([
-                        'field' => '*',
-                        'table' => 'db_order',
-                        'where' => [
-                            'order_id' => $this->put('orderId')
-                        ]
-                    ])->row_array();
-                    if (empty($check['db_order'])) {
-                        $checking = false;
-                        $response = $this->formatter([
-                            'code' => self::HTTP_NOT_FOUND,
-                            'message' => 'data not found',
-                        ]);
+                    if (!empty($this->get('keyword'))) {
+                        $param['db_order_penagihan']['like'] = [
+                            'pg.invoice_no' => $this->get('keyword')
+                        ];
+                    }
+
+                    $getSort = (!empty($this->get('sort'))) ? explode('-', $this->get('sort')) : null;
+                    if (!empty($getSort)) {
+                        $param['db_order_penagihan']['order_by'] = [
+                            $getSort[0] => $getSort[1]
+                        ];
                     } else {
-                        if ($check['db_order']['order_status_id'] == '17' || $check['db_order']['order_status_id'] == '19') {
-                            $checking = false;
-                            $response = $this->formatter([
-                                'code' => self::HTTP_CONFLICT,
-                                'message' => 'order has answered',
-                            ]);
+                        $param['db_order_penagihan']['order_by'] = [
+                            'pg.id' => 'desc'
+                        ];
+                    }
+
+                    $param['group_by'] = 'pg.order_id';
+
+                    $param['db_order_penagihan']['limit'] = [
+                        $this->get('limit') => ($this->get('page') - 1) * $this->get('limit')
+                    ];
+                    $parsing['db_order_penagihan'] = $this->api_model->select_data($param['db_order_penagihan'])->result();
+
+                    $output = [];
+                    if (empty($parsing['db_order_penagihan'])) {
+                        $data['total'] = 0;
+                        $data['items'] = [];
+                        $code = self::HTTP_NO_CONTENT;
+                    } else {
+                        $code = self::HTTP_OK;
+                        $totalRecord = $this->api_model->count_all_data($param['db_order_penagihan']);
+
+                        $limit = (int) $this->get('limit');
+                        $currentPage = (int) $this->get('page');
+                        $prevPage = ($currentPage > 1) ? $currentPage - 1 : 0;
+                        $totalPage = ceil($totalRecord / $limit);
+
+                        $data['path'] = base_url() . "seller/order/billing";
+                        $data['firstPageUrl'] = base_url() . "seller/order/billing?page=1&limit={$limit}";
+                        $data['prevPageUrl'] = ($prevPage > 0) ? base_url() . "seller/order/billing?page={$prevPage}&limit={$limit}" : null;
+
+                        $data['perPage'] = $limit;
+                        $data['currentPage'] = $currentPage;
+                        $data['lastPage'] = $totalPage;
+                        $data['nextPage'] = ($currentPage < $totalPage) ? $currentPage + 1 : null;
+
+                        $data['from'] = ($totalRecord > 0) ? ($currentPage - 1) * $limit + 1 : 0;
+
+                        if ($limit > $totalRecord) {
+                            $data['to'] = $totalRecord;
                         } else {
-                            if (empty($this->put('fileName'))) {
-                                $checking = false;
-                                $response = $this->formatter([
-                                    'code' => self::HTTP_BAD_REQUEST,
-                                    'message' => 'file not declared',
-                                ]);
-                            } else {
-                                $getOrder = json_decode(shoot_api([
-                                    'url' => base_url() . "order/{$this->put('orderId')}",
-                                    'method' => 'GET',
-                                    'header' => [
-                                        "Authorization: {$this->input->request_headers()['Authorization']}"
-                                    ],
-                                ]), true);
-                                if ($getOrder['status']['code'] !== 200) {
-                                    $checking = false;
-                                    $response = $this->formatter([
-                                        'code' => $getOrder['status']['code'],
-                                        'message' => $getOrder['status']['message']
-                                    ]);
-                                }
-                            }
+                            $data['to'] = ($currentPage > 1) ? $data['from'] + $limit - 1 : $limit;
                         }
-                    }
-                }
-            }
 
-            if ($checking === true) {
-                $parsing['getMall'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_mall',
-                    'where' => [
-                        'mall_id' => $check['db_order']['mall_id']
-                    ]
-                ])->row_array();
+                        $data['total'] = $totalRecord;
 
-                $this->db->trans_start();
+                        $data['sort'] = (!empty($this->get('sort'))) ? $this->get('sort') : 'default';
+                        $data['items'] = [];
 
-                $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId')
-                    ],
-                    'data' => [
-                        'order_status_id' => 19
-                    ],
-                    'table' => 'db_order'
-                ]);
+                        $no = $data['from'];
+                        foreach ($parsing['db_order_penagihan'] as $key_db_order_penagihan) {
+                            $items['no'] = $no;
+                            $items['id'] = $key_db_order_penagihan->id;
+                            $items['invoice'] = $key_db_order_penagihan->invoice_no;
+                            $items['customerName'] = "{$key_db_order_penagihan->firstname} {$key_db_order_penagihan->lastname}";
+                            $items['billingDate'] = ((!empty($key_db_order_penagihan->tgl_penagihan)) && strtotime($key_db_order_penagihan->tgl_penagihan)) ? $key_db_order_penagihan->tgl_penagihan : null;
+                            $items['paymentDate'] = ((!empty($key_db_order_penagihan->tgl_bayar)) && strtotime($key_db_order_penagihan->tgl_bayar)) ? $key_db_order_penagihan->tgl_bayar : null;
+                            $items['createdAt'] = ((!empty($key_db_order_penagihan->tgl_created)) && strtotime($key_db_order_penagihan->tgl_created)) ? $key_db_order_penagihan->tgl_created : null;
 
-                $this->api_model->send_data([
-                    'data' => [
-                        'order_id' => $this->put('orderId'),
-                        'order_status_id' => 19,
-                        'notify' => 0,
-                        'comment' => 'Pembeli menolak pesanan yang anda kirimkan',
-                        'date_added' => date('Y-m-d H:i:s'),
-                    ],
-                    'table' => 'db_order_history'
-                ]);
+                            $data['items'][] = $items;
 
-                $this->api_model->send_data([
-                    'data' => [
-                        'order_id' => $this->put('orderId'),
-                        'product_id' => $getOrder['data']['items'][0]['productId'],
-                        'customer_id' => $this->core['customer']['id'],
-                        'id_komplain_kategori' => $this->put('category'),
-                        'komplain' => $this->put('reason'),
-                        'mall_id' => $check['db_order']['mall_id'],
-                        'gambar' => $this->put('fileName'),
-                        'status' => '0',
-                        'last_update' => date('Y-m-d H:i:s'),
-                    ],
-                    'table' => 'db_komplain'
-                ]);
-
-                $lastIdComplaint = $this->db->insert_id();
-
-                $this->db->trans_complete();
-
-                if ($this->db->trans_status() === false) {
-                    $db_error = $this->db->error();
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => "edit data failed [Database error! Error Code [{$db_error['code']}] Error: {$db_error['message']}]",
-                    ]);
-                } else {
-                    $mailing = $this->mailingWithNotif([
-                        'subject' => 'Komplain Pembeli',
-                        'message' => "Pembeli telah mengirimkan komplain untuk kode pesanan {$check['db_order']['invoice_no']} dengan isi komplain '{$this->put('reason')}'",
-                        'to' => [
-                            $parsing['getMall']['email']
-                        ],
-                        'textNotif' => 'Seorang pembeli mengirimkan komplain untuk pesanan dari toko anda',
-                        'mallId' => $check['db_order']['mall_id'],
-                        'linkId' => $lastIdComplaint,
-                        'type' => 'komplain',
-                    ]);
-
-                    $response = $this->formatter([
-                        'code' => self::HTTP_OK,
-                        'message' => "edit data success",
-                        'mailing' => $mailing,
-                    ]);
-                }
-            }
-        }
-
-        $this->response($response['result'], $response['status']);
-    }
-
-    public function confirmPayment_put()
-    {
-        if (!empty($this->auth())) {
-            $response = $this->auth();
-        } else {
-            $checking = true;
-
-            if (empty($this->core['customer'])) {
-                $checking = false;
-                $response = $this->formatter([
-                    'code' => self::HTTP_UNAUTHORIZED,
-                    'message' => 'unauthorized',
-                ]);
-            } else {
-                if (!$this->put()) {
-                    $checking = false;
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => 'bad request',
-                    ]);
-                } else {
-                    $check['db_order'] = $this->api_model->select_data([
-                        'field' => '*',
-                        'table' => 'db_order',
-                        'where' => [
-                            'order_id' => $this->put('orderId')
-                        ]
-                    ])->row_array();
-                    if (empty($check['db_order'])) {
-                        $checking = false;
-                        $response = $this->formatter([
-                            'code' => self::HTTP_NOT_FOUND,
-                            'message' => 'data not found',
-                        ]);
-                    } else {
-                        $getOrder = json_decode(shoot_api([
-                            'url' => base_url() . "order/{$this->put('orderId')}",
-                            'method' => 'GET',
-                            'header' => [
-                                "Authorization: {$this->input->request_headers()['Authorization']}"
-                            ],
-                        ]), true);
-                        if ($getOrder['status']['code'] !== 200) {
-                            $checking = false;
-                            $response = $this->formatter([
-                                'code' => $getOrder['status']['code'],
-                                'message' => $getOrder['status']['message']
-                            ]);
-                        }
-                    }
-                }
-            }
-
-            if ($checking === true) {
-                $parsing['getMall'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_mall',
-                    'where' => [
-                        'mall_id' => $check['db_order']['mall_id']
-                    ]
-                ])->row_array();
-
-                $parsing['db_order_pembayaran'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_order_pembayaran',
-                    'where' => [
-                        'order_id' => $this->put('orderId'),
-                    ],
-                ])->row();
-
-                $parsing['db_bank'] = $this->api_model->select_data([
-                    'field' => '*',
-                    'table' => 'db_bank',
-                    'where' => [
-                        'status' => '1',
-                        'slug' => $this->put('bank')
-                    ]
-                ])->row_array();
-
-                $this->db->trans_start();
-
-                if (!empty($parsing['db_order_pembayaran'])) {
-                    if (!empty($parsing['db_order_pembayaran']->img_upload)) {
-                        if (file_exists($this->core['baseUrlCustomer'] . 'assets/uplod/konfirmasi/' . $parsing['db_order_pembayaran']->img_upload)) {
-                            unlink($this->core['baseUrlCustomer'] . 'assets/uplod/konfirmasi/' . $parsing['db_order_pembayaran']->img_upload);
+                            $no++;
                         }
                     }
 
-                    $this->api_model->send_data([
-                        'where' => [
-                            'order_id' => $this->put('orderId')
-                        ],
-                        'data' => [
-                            'metode' => $this->put('bank'),
-                            'no_rek_pembeli' => $this->put('accountNumber'),
-                            'an_rek_pembeli' => $this->put('accountAsName'),
-                            'memo' => $this->put('memo'),
-                            'tgl_konfirmasi' => date('Y-m-d H:i:s'),
-                            'tgl_pembayaran' => date('Y-m-d', strtotime($this->put('date'))),
-                            'total_pembayaran' => $getOrder['data']['billingDetail']['total'],
-                            'img_upload' => $this->put('fileName')
-                        ],
-                        'table' => 'db_order_pembayaran'
-                    ]);
-                } else {
-                    $this->api_model->send_data([
-                        'data' => [
-                            'invoice_no' => $check['db_order']['invoice_no'],
-                            'order_id' => $this->put('orderId'),
-                            'mall_id' => $check['db_order']['mall_id'],
-                            'customer_id' => $this->core['customer']['id'],
-                            'metode' => $this->put('bank'),
-                            'no_rek_pembeli' => $this->put('accountNumber'),
-                            'an_rek_pembeli' => $this->put('accountAsName'),
-                            'memo' => $this->put('memo'),
-                            'tgl_konfirmasi' => date('Y-m-d H:i:s'),
-                            'tgl_pembayaran' => date('Y-m-d', strtotime($this->put('date'))),
-                            'total_pembayaran' => $getOrder['data']['billingDetail']['total'],
-                            'id_status_pembayaran' => '1',
-                            'img_upload' => $this->put('fileName')
-                        ],
-                        'table' => 'db_order_pembayaran'
-                    ]);
-                }
-
-                $this->api_model->send_data([
-                    'where' => [
-                        'order_id' => $this->put('orderId')
-                    ],
-                    'data' => [
-                        'payment_method' => $this->put('bank'),
-                        'order_status_id' => 18
-                    ],
-                    'table' => 'db_order'
-                ]);
-
-                $this->db->trans_complete();
-
-                if ($this->db->trans_status() === false) {
-                    if (empty($parsing['db_order_pembayaran'])) {
-                        if (file_exists($this->core['baseUrlCustomer'] . 'assets/uplod/konfirmasi/' . $this->put('fileName'))) {
-                            unlink($this->core['baseUrlCustomer'] . 'assets/uplod/konfirmasi/' . $this->put('fileName'));
-                        }
+                    foreach ($column as $key_column) {
+                        $data['column'][] = [
+                            'name' => $key_column['name'],
+                            'isOrder' => $key_column['isOrder'],
+                            'inActive' => ($getSort[0] == $key_column['value']) ? true : false,
+                            'value' => ($getSort[0] == $key_column['value']) ? $getSort[0] : $key_column['value'],
+                            'order' => ($getSort[0] == $key_column['value']) ? $getSort[1] : '',
+                        ];
                     }
 
-                    $db_error = $this->db->error();
-                    $response = $this->formatter([
-                        'code' => self::HTTP_BAD_REQUEST,
-                        'message' => "edit data failed [Database error! Error Code [{$db_error['code']}] Error: {$db_error['message']}]",
-                    ]);
-                } else {
-                    $mailing = $this->mailingWithNotif([
-                        'subject' => 'SIPLah - Konfirmasi Pembayaran',
-                        'message' => "Pesanan dengan nomor invoice {$check['db_order']['invoice_no']} telah dibayar oleh pembeli, pembayaran pada tanggal {$this->put('date')} dengan metode pembayaran {$parsing['db_bank']['bank']} rekening atas nama {$this->put('accountAsName')}",
-                        'to' => [
-                            $parsing['getMall']['email']
-                        ],
-                        'mallId' => $check['db_order']['mall_id'],
-                        'linkId' => $this->put('orderId'),
-                        'type' => 'tagihan'
-                    ]);
+                    $output = $data;
 
                     $response = $this->formatter([
-                        'code' => self::HTTP_OK,
-                        'message' => "edit data success",
-                        'mailing' => $mailing,
+                        'code' => $code,
+                        'message' => 'get data success',
+                        'data' => $output
                     ]);
                 }
             }

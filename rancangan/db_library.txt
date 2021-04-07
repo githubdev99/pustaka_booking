@@ -1,0 +1,46 @@
+-> role
+id
+name
+
+-> user
+id
+role_id
+email
+password
+name
+image
+gender
+address
+phone_number
+is_active
+created_at
+
+-> category
+id
+name
+
+-> book
+id
+category_id
+name
+isbn
+image
+author
+publisher
+publication_year
+stock
+
+-> loaning
+id
+user_data
+book_data
+amount
+created_at
+is_return_done
+
+-> returning
+id
+loaning_data
+penalty_day
+penalty_price
+created_at
