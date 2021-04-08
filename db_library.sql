@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 07, 2021 at 10:49 AM
+-- Generation Time: Apr 08, 2021 at 11:47 AM
 -- Server version: 10.4.13-MariaDB
 -- PHP Version: 7.4.7
 
@@ -42,6 +42,31 @@ CREATE TABLE `book` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `booking`
+--
+
+CREATE TABLE `booking` (
+  `id` int(11) NOT NULL,
+  `user_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`user_data`)),
+  `pickup_due_date` date NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `booking_detail`
+--
+
+CREATE TABLE `booking_detail` (
+  `id` int(11) NOT NULL,
+  `booking_id` int(11) NOT NULL,
+  `book_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`book_data`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `category`
 --
 
@@ -59,11 +84,24 @@ CREATE TABLE `category` (
 CREATE TABLE `loaning` (
   `id` int(11) NOT NULL,
   `user_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`user_data`)),
+  `return_due_date` date DEFAULT NULL,
+  `is_return_done` tinyint(1) NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `loaning_detail`
+--
+
+CREATE TABLE `loaning_detail` (
+  `id` int(11) NOT NULL,
+  `loaning_id` int(11) NOT NULL,
   `book_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`book_data`)),
-  `amount` int(11) NOT NULL,
-  `created_at` datetime NOT NULL,
-  `is_return_done` tinyint(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='peminjaman buku';
+  `penalty_day` int(11) NOT NULL,
+  `penalty_price` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -73,11 +111,9 @@ CREATE TABLE `loaning` (
 
 CREATE TABLE `returning` (
   `id` int(11) NOT NULL,
-  `loaning_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`loaning_data`)),
-  `penalty_day` int(11) NOT NULL DEFAULT 0,
-  `penalty_price` int(11) NOT NULL DEFAULT 0,
+  `loaning_id` int(11) NOT NULL,
   `created_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='pengembalian buku';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -122,6 +158,19 @@ ALTER TABLE `book`
   ADD KEY `category_id` (`category_id`);
 
 --
+-- Indexes for table `booking`
+--
+ALTER TABLE `booking`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `booking_detail`
+--
+ALTER TABLE `booking_detail`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `booking_id` (`booking_id`);
+
+--
 -- Indexes for table `category`
 --
 ALTER TABLE `category`
@@ -134,10 +183,18 @@ ALTER TABLE `loaning`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `loaning_detail`
+--
+ALTER TABLE `loaning_detail`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `loaning_id` (`loaning_id`);
+
+--
 -- Indexes for table `returning`
 --
 ALTER TABLE `returning`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `loaning_id` (`loaning_id`);
 
 --
 -- Indexes for table `role`
@@ -163,6 +220,18 @@ ALTER TABLE `book`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `booking`
+--
+ALTER TABLE `booking`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `booking_detail`
+--
+ALTER TABLE `booking_detail`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `category`
 --
 ALTER TABLE `category`
@@ -172,6 +241,12 @@ ALTER TABLE `category`
 -- AUTO_INCREMENT for table `loaning`
 --
 ALTER TABLE `loaning`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `loaning_detail`
+--
+ALTER TABLE `loaning_detail`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -201,6 +276,24 @@ ALTER TABLE `user`
 --
 ALTER TABLE `book`
   ADD CONSTRAINT `book_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `booking_detail`
+--
+ALTER TABLE `booking_detail`
+  ADD CONSTRAINT `booking_detail_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `loaning_detail`
+--
+ALTER TABLE `loaning_detail`
+  ADD CONSTRAINT `loaning_detail_ibfk_1` FOREIGN KEY (`loaning_id`) REFERENCES `loaning` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `returning`
+--
+ALTER TABLE `returning`
+  ADD CONSTRAINT `returning_ibfk_1` FOREIGN KEY (`loaning_id`) REFERENCES `loaning` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `user`

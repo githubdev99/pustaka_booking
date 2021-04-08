@@ -30,17 +30,32 @@ publisher
 publication_year
 stock
 
+-> booking
+id
+user_data
+pickup_due_date
+created_at
+
+-> booking_detail
+id
+booking_id
+book_data
+
 -> loaning
 id
 user_data
-book_data
-amount
-created_at
+return_due_date
 is_return_done
+created_at
+
+-> loaning_detail
+id
+loaning_id
+book_data
+penalty_day
+penalty_price
 
 -> returning
 id
-loaning_data
-penalty_day
-penalty_price
+loaning_id
 created_at
