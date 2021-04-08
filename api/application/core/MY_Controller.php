@@ -931,4 +931,22 @@ class MY_Controller extends REST_Controller
             return $mailingWithNotif;
         }
     }
+
+    public function getOrderTotalType($param)
+    {
+        if (empty($param)) {
+            return 0;
+        } else {
+            $getValue = $this->api_model->select_data([
+                'field' => 'value',
+                'table' => 'db_order_total',
+                'where' => [
+                    'order_id' => $param['id'],
+                    'code' => $param['code'],
+                ],
+            ])->row_array()['value'];
+
+            return $getValue;
+        }
+    }
 }

@@ -23,6 +23,24 @@ class Api_model extends CI_Model
 				$this->db->join($key['table'], $key['on'], $key['type']);
 			}
 		}
+		if (!empty($param['column_search'])) {
+			$i = 0;
+			foreach ($param['column_search'] as $item) {
+				if (!empty($param['search'])) {
+					if ($i === 0) {
+						$this->db->group_start();
+						$this->db->like($item, $param['search']);
+					} else {
+						$this->db->or_like($item, $param['search']);
+					}
+
+					if (count($param['column_search']) - 1 == $i) {
+						$this->db->group_end();
+					}
+				}
+				$i++;
+			}
+		}
 		if (!empty($param['like'])) {
 			$this->db->like($param['like']);
 		}
@@ -156,6 +174,24 @@ class Api_model extends CI_Model
 		if (!empty($param['join'])) {
 			foreach ($param['join'] as $key) {
 				$this->db->join($key['table'], $key['on'], $key['type']);
+			}
+		}
+		if (!empty($param['column_search'])) {
+			$i = 0;
+			foreach ($param['column_search'] as $item) {
+				if (!empty($param['search'])) {
+					if ($i === 0) {
+						$this->db->group_start();
+						$this->db->like($item, $param['search']);
+					} else {
+						$this->db->or_like($item, $param['search']);
+					}
+
+					if (count($param['column_search']) - 1 == $i) {
+						$this->db->group_end();
+					}
+				}
+				$i++;
 			}
 		}
 		if (!empty($param['like'])) {
