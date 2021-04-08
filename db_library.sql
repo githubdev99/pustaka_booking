@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 08, 2021 at 11:47 AM
+-- Generation Time: Apr 08, 2021 at 12:00 PM
 -- Server version: 10.4.13-MariaDB
 -- PHP Version: 7.4.7
 
@@ -87,7 +87,7 @@ CREATE TABLE `loaning` (
   `return_due_date` date DEFAULT NULL,
   `is_return_done` tinyint(1) NOT NULL,
   `created_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='peminjaman buku';
 
 -- --------------------------------------------------------
 
@@ -101,7 +101,7 @@ CREATE TABLE `loaning_detail` (
   `book_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`book_data`)),
   `penalty_day` int(11) NOT NULL,
   `penalty_price` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='detail peminjaman buku';
 
 -- --------------------------------------------------------
 
@@ -113,7 +113,7 @@ CREATE TABLE `returning` (
   `id` int(11) NOT NULL,
   `loaning_id` int(11) NOT NULL,
   `created_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='pengembalian buku';
 
 -- --------------------------------------------------------
 
