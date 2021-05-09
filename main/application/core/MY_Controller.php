@@ -15,10 +15,29 @@ class MY_Controller extends MX_Controller
 		$this->core['logo_mini'] = $this->core['url_images'] . 'logo-mini.png';
 		$this->core['logo_full'] = $this->core['url_images'] . 'logo-mini.png';
 		$this->core['app_name'] = 'Pustaka Booking';
+		$this->core['imageNotFound'] = "{$this->core['url_images']}img-thumbnail.png";
+		$this->core['imageUpload'] = base_url() . "assets/upload/";
 
 		if ($this->session->has_userdata('id')) {
 			$this->core['user'] = $this->dataUser($this->session->userdata('id'));
 		}
+
+		$this->core['totalMember'] = $this->api_model->count_all_data([
+			'where' => [
+				'role_id' => 2
+			],
+			'table' => 'user',
+		]);
+		$this->core['totalBook'] = $this->api_model->count_all_data([
+			'table' => 'book',
+		]);
+		$this->core['category'] = $this->api_model->select_data([
+			'field' => '*',
+			'table' => 'category',
+			'order_by' => [
+				'name' => 'asc',
+			],
+		])->result();
 	}
 
 	public function dataUser($id)
@@ -69,7 +88,8 @@ class MY_Controller extends MX_Controller
 			position: "top",
 			showCloseButton: !0,
 			showConfirmButton: false,
-			timer: 4000,
+			timer: 2000,
+			timerProgressBar: true,
 			onOpen: (toast) => {
 				toast.addEventListener("mouseenter", Swal.stopTimer)
 				toast.addEventListener("mouseleave", Swal.resumeTimer)

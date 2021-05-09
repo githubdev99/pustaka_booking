@@ -33,7 +33,7 @@
                         $('button[name="' + activeElement.name + '"]').removeAttr('disabled');
                         $('button[name="' + activeElement.name + '"]').html(activeElement.textContent);
 
-                        show_alert({
+                        show_alert_mini({
                             ...callback,
                             type: response.type,
                             message: response.message

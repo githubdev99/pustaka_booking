@@ -39,44 +39,35 @@ class Auth extends MY_Controller
             $isError = false;
 
             if ($this->input->post('submit') == 'login') {
-                if (!$this->input->post()) {
+                $check['user'] = $this->api_model->select_data([
+                    'field' => 'user.*, role.name as role_name',
+                    'table' => 'user',
+                    'join' => [
+                        [
+                            'table' => 'role',
+                            'on' => 'role.id = user.role_id',
+                            'type' => 'inner'
+                        ],
+                    ],
+                    'where' => [
+                        'user.email' => $this->input->post('email'),
+                    ],
+                ])->row();
+                if (empty($check['user'])) {
                     $isError = true;
                     $output = [
                         'isError' => $isError,
-                        'type' => 'error',
-                        'message' => 'Permintaan tidak valid',
+                        'type' => 'warning',
+                        'message' => 'Email tidak ditemukan',
                     ];
                 } else {
-                    $check['user'] = $this->api_model->select_data([
-                        'field' => 'user.*, role.name as role_name',
-                        'table' => 'user',
-                        'join' => [
-                            [
-                                'table' => 'role',
-                                'on' => 'role.id = user.role_id',
-                                'type' => 'inner'
-                            ],
-                        ],
-                        'where' => [
-                            'user.email' => $this->input->post('email'),
-                        ],
-                    ])->row();
-                    if (empty($check['user'])) {
+                    if (!password_verify($this->input->post('password'), $check['user']->password)) {
                         $isError = true;
                         $output = [
                             'isError' => $isError,
-                            'type' => 'warning',
-                            'message' => 'Email tidak ditemukan',
+                            'type' => 'error',
+                            'message' => 'Email atau password salah',
                         ];
-                    } else {
-                        if (!password_verify($this->input->post('password'), $check['user']->password)) {
-                            $isError = true;
-                            $output = [
-                                'isError' => $isError,
-                                'type' => 'error',
-                                'message' => 'Email atau password salah',
-                            ];
-                        }
                     }
                 }
 
@@ -114,50 +105,41 @@ class Auth extends MY_Controller
             $isError = false;
 
             if ($this->input->post('submit') == 'register') {
-                if (!$this->input->post()) {
+                $secret_key = "6LdGWnYaAAAAANk4u5nW_3bEuii-26C7hc3cAYFS";
+
+                $response = json_decode(shoot_api([
+                    'url' => 'https://www.google.com/recaptcha/api/siteverify?secret=' . $secret_key . '&response=' . $this->input->post('g-recaptcha-response'),
+                    'method' => 'GET',
+                    'header' => [
+                        "Content-Type: application/json"
+                    ]
+                ]), true);
+
+                if (!$response['success'] || (!$response['success'] && $response['error-codes'][0] != 'timeout-or-duplicate')) {
                     $isError = true;
                     $output = [
                         'isError' => $isError,
                         'type' => 'error',
-                        'message' => 'Permintaan tidak valid',
+                        'message' => 'Verifikasi captcha gagal.',
+                        'callback' => base_url() . 'auth/register'
                     ];
                 } else {
-                    $secret_key = "6LdGWnYaAAAAANk4u5nW_3bEuii-26C7hc3cAYFS";
-
-                    $response = json_decode(shoot_api([
-                        'url' => 'https://www.google.com/recaptcha/api/siteverify?secret=' . $secret_key . '&response=' . $this->input->post('g-recaptcha-response'),
-                        'method' => 'GET',
-                        'header' => [
-                            "Content-Type: application/json"
-                        ]
-                    ]), true);
-
-                    if (!$response['success'] || (!$response['success'] && $response['error-codes'][0] != 'timeout-or-duplicate')) {
+                    $check['user'] = $this->api_model->select_data([
+                        'field' => '*',
+                        'table' => 'user',
+                        'where' => [
+                            'email' => $this->input->post('email'),
+                            'role_id' => 2,
+                        ],
+                    ])->row();
+                    if (!empty($check['user'])) {
                         $isError = true;
                         $output = [
                             'isError' => $isError,
-                            'type' => 'error',
-                            'message' => 'Verifikasi captcha gagal.',
+                            'type' => 'warning',
+                            'message' => 'Email sudah digunakan',
                             'callback' => base_url() . 'auth/register'
                         ];
-                    } else {
-                        $check['user'] = $this->api_model->select_data([
-                            'field' => '*',
-                            'table' => 'user',
-                            'where' => [
-                                'email' => $this->input->post('email'),
-                                'role_id' => 2,
-                            ],
-                        ])->row();
-                        if (!empty($check['user'])) {
-                            $isError = true;
-                            $output = [
-                                'isError' => $isError,
-                                'type' => 'warning',
-                                'message' => 'Email sudah digunakan',
-                                'callback' => base_url() . 'auth/register'
-                            ];
-                        }
                     }
                 }
 

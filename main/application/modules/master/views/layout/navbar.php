@@ -9,7 +9,7 @@
                     <img src="<?= $core['user']['image'] ?>" alt="profile-user" class="ml-2 rounded-circle thumb-xs" />
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#"><i data-feather="user" class="align-self-center icon-xs icon-dual mr-1"></i> Profil Akun</a>
+                    <a class="dropdown-item" href="<?= base_url() . $core['user']['role']['name'] ?>/profile"><i data-feather="user" class="align-self-center icon-xs icon-dual mr-1"></i> Profil Akun</a>
                     <div class="dropdown-divider mb-0"></div>
                     <a class="dropdown-item" href="<?= base_url() ?>auth/logout"><i data-feather="power" class="align-self-center icon-xs icon-dual mr-1"></i> Logout</a>
                 </div>

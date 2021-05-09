@@ -9,6 +9,77 @@ class Api_model extends CI_Model
 		$this->db->db_debug = FALSE;
 	}
 
+	// Server Side Datatable
+	public function query_datatable($param)
+	{
+		$column_order = $param['column_order'];
+
+		$this->db->select($param['field']);
+		$this->db->from($param['table']);
+
+		$i = 0;
+		foreach ($param['column_search'] as $item) {
+			if (!empty($_REQUEST['search']['value'])) {
+				if ($i === 0) {
+					$this->db->group_start();
+					$this->db->like($item, $_REQUEST['search']['value']);
+				} else {
+					$this->db->or_like($item, $_REQUEST['search']['value']);
+				}
+
+				if (count($param['column_search']) - 1 == $i) {
+					$this->db->group_end();
+				}
+			}
+			$i++;
+		}
+
+		if (!empty($param['join'])) {
+			foreach ($param['join'] as $key) {
+				$this->db->join($key['table'], $key['on'], $key['type']);
+			}
+		}
+		if (!empty($param['where'])) {
+			$this->db->where($param['where']);
+		}
+		if (!empty($_REQUEST['order'])) {
+			$this->db->order_by($column_order[$_REQUEST['order']['0']['column']], $_REQUEST['order']['0']['dir']);
+		}
+		if (!empty($param['order_by'])) {
+			$this->db->order_by(key($param['order_by']), $param['order_by'][key($param['order_by'])]);
+		}
+		if (!empty($param['distinct'])) {
+			$this->db->distinct($param['distinct']);
+		}
+		if (!empty($param['group_by'])) {
+			$this->db->group_by($param['group_by']);
+		}
+	}
+
+	public function get_datatable($param)
+	{
+		$this->query_datatable($param);
+		if ($_REQUEST['length'] != -1) {
+			$this->db->limit($_REQUEST['length'], $_REQUEST['start']);
+		}
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+	public function get_total_filtered($param)
+	{
+		$this->query_datatable($param);
+		$query = $this->db->get();
+		return $query->num_rows();
+	}
+
+	public function get_total_data($param)
+	{
+		$this->db->from($param['table']);
+		return $this->db->count_all_results();
+	}
+	// End Server Side Datatable
+
 	public function select_data($param)
 	{
 		if (!empty($param['field'])) {

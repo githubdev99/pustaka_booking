@@ -1,6 +1,8 @@
 $(document).ready(function () {
 	$(".select2").each(function () {
-		$(this).select2();
+		$(this).select2({
+			placeholder: 'Pilih salah satu'
+		});
 	});
 
 	$(".datepicker").each(function () {
@@ -94,7 +96,7 @@ function show_alert_mini(params) {
 				position: "top",
 				showCloseButton: !0,
 				showConfirmButton: false,
-				timer: 4000,
+				timer: 2500,
 				timerProgressBar: true,
 				onOpen: (toast) => {
 					toast.addEventListener("mouseenter", Swal.stopTimer)
@@ -112,7 +114,7 @@ function show_alert_mini(params) {
 				position: "top",
 				showCloseButton: !0,
 				showConfirmButton: false,
-				timer: 4000,
+				timer: 2500,
 				timerProgressBar: true,
 				onOpen: (toast) => {
 					toast.addEventListener("mouseenter", Swal.stopTimer)
