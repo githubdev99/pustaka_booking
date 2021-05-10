@@ -37,7 +37,7 @@
                                 <li>Stok Tersedia : <?= $data['stock'] ?></li>
                             </ul>
                             <div class="quantity mt-3">
-                                <a href="#" class="btn btn-info btn-sm text-white px-4 d-inline-block"><i class="mdi mdi-bookmark-plus mr-2"></i>Booking</a>
+                                <button type="button" onclick="show_modal({ modal: 'add_booking', name: '<?= $data['name'] ?>', id: '<?= $data['id'] ?>' })" class="btn btn-info btn-sm text-white px-4 d-inline-block"><i class="mdi mdi-bookmark-plus mr-2"></i>Booking</button>
                                 <a href="<?= base_url() ?>member/home" class="btn btn-secondary btn-sm text-white px-4 d-inline-block"><i class="mdi mdi-arrow-left mr-2"></i>Kembali</a>
                             </div>
                         </div>

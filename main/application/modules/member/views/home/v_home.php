@@ -32,8 +32,8 @@
                             <small class="text-muted"><?= $key_data['publicationYear'] ?></small>
                         </div>
                     </div>
-                    <button class="btn btn-soft-info btn-block">Booking</button>
-                    <a href="<?= base_url() ?>member/home/detail/<?= $key_data['id'] ?>" class="btn btn-soft-secondary btn-block">Detail</a>
+                    <button class="btn btn-info btn-block" onclick="show_modal({ modal: 'add_booking', name: '<?= $key_data['name'] ?>', id: '<?= $key_data['id'] ?>' })">Booking</button>
+                    <a href="<?= base_url() ?>member/home/detail/<?= $key_data['id'] ?>" class="btn btn-secondary btn-block">Detail</a>
                 </div>
                 <!--end card-body-->
             </div>

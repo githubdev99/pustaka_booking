@@ -29,9 +29,6 @@
                         <p class="m-0 font-18 font-weight-bold"><?= $core['totalMember'] ?></p>
                         <p class="text-dark mb-0 font-weight-semibold">Jumlah Anggota</p>
                     </div>
-                    <div class="flex-fill bd-highlight text-right">
-                        <a href="#" data-toggle="tooltip" data-placement="top" title="Lihat Laporan"><i class="far fa-file-alt"></i></a>
-                    </div>
                 </div>
             </div>
             <!--end card-body-->
@@ -51,9 +48,6 @@
                         <p class="m-0 font-18 font-weight-bold"><?= $core['totalBook'] ?></p>
                         <p class="text-dark mb-0 font-weight-semibold">Stok Buku Terdaftar</p>
                     </div>
-                    <div class="flex-fill bd-highlight text-right">
-                        <a href="#" data-toggle="tooltip" data-placement="top" title="Lihat Laporan"><i class="far fa-file-alt"></i></a>
-                    </div>
                 </div>
             </div>
             <!--end card-body-->
@@ -70,11 +64,8 @@
                         </i>
                     </div>
                     <div class="flex-fill bd-highlight ml-2">
-                        <p class="m-0 font-18 font-weight-bold">155</p>
+                        <p class="m-0 font-18 font-weight-bold"><?= $core['totalLoaning'] ?></p>
                         <p class="text-dark mb-0 font-weight-semibold">Buku Dipinjam</p>
-                    </div>
-                    <div class="flex-fill bd-highlight text-right">
-                        <a href="#" data-toggle="tooltip" data-placement="top" title="Lihat Laporan"><i class="far fa-file-alt"></i></a>
                     </div>
                 </div>
             </div>
@@ -92,11 +83,8 @@
                         </i>
                     </div>
                     <div class="flex-fill bd-highlight ml-2">
-                        <p class="m-0 font-18 font-weight-bold">155</p>
+                        <p class="m-0 font-18 font-weight-bold"><?= $core['totalBooking'] ?></p>
                         <p class="text-dark mb-0 font-weight-semibold">Buku Dibooking</p>
-                    </div>
-                    <div class="flex-fill bd-highlight text-right">
-                        <a href="#" data-toggle="tooltip" data-placement="top" title="Lihat Laporan"><i class="far fa-file-alt"></i></a>
                     </div>
                 </div>
             </div>

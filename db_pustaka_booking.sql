@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 10, 2021 at 08:22 AM
+-- Generation Time: May 10, 2021 at 12:28 PM
 -- Server version: 10.4.13-MariaDB
 -- PHP Version: 7.4.7
 
@@ -55,10 +55,18 @@ INSERT INTO `book` (`id`, `category_id`, `name`, `isbn`, `image`, `author`, `pub
 
 CREATE TABLE `booking` (
   `id` int(11) NOT NULL,
-  `user_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`user_data`)),
+  `booking_number` varchar(50) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `pickup_due_date` date NOT NULL,
   `created_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `booking`
+--
+
+INSERT INTO `booking` (`id`, `booking_number`, `user_id`, `pickup_due_date`, `created_at`) VALUES
+(2, 'ID2105102', 2, '2021-05-12', '2021-05-10 16:07:43');
 
 -- --------------------------------------------------------
 
@@ -69,8 +77,16 @@ CREATE TABLE `booking` (
 CREATE TABLE `booking_detail` (
   `id` int(11) NOT NULL,
   `booking_id` int(11) NOT NULL,
-  `book_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`book_data`))
+  `book_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `booking_detail`
+--
+
+INSERT INTO `booking_detail` (`id`, `booking_id`, `book_id`) VALUES
+(3, 2, 13),
+(4, 2, 12);
 
 -- --------------------------------------------------------
 
@@ -102,11 +118,22 @@ INSERT INTO `category` (`id`, `name`) VALUES
 
 CREATE TABLE `loaning` (
   `id` int(11) NOT NULL,
-  `user_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`user_data`)),
+  `booking_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `loaning_time` int(11) NOT NULL,
   `return_due_date` date DEFAULT NULL,
   `is_return_done` tinyint(1) NOT NULL,
+  `penalty_day` int(11) NOT NULL,
+  `penalty_price` int(11) NOT NULL,
   `created_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='peminjaman buku';
+
+--
+-- Dumping data for table `loaning`
+--
+
+INSERT INTO `loaning` (`id`, `booking_id`, `user_id`, `loaning_time`, `return_due_date`, `is_return_done`, `penalty_day`, `penalty_price`, `created_at`) VALUES
+(1, 2, 2, 6, '2021-05-16', 0, 0, 1000, '2021-05-10 17:24:55');
 
 -- --------------------------------------------------------
 
@@ -117,10 +144,16 @@ CREATE TABLE `loaning` (
 CREATE TABLE `loaning_detail` (
   `id` int(11) NOT NULL,
   `loaning_id` int(11) NOT NULL,
-  `book_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`book_data`)),
-  `penalty_day` int(11) NOT NULL,
-  `penalty_price` int(11) NOT NULL
+  `book_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='detail peminjaman buku';
+
+--
+-- Dumping data for table `loaning_detail`
+--
+
+INSERT INTO `loaning_detail` (`id`, `loaning_id`, `book_id`) VALUES
+(1, 1, 13),
+(2, 1, 12);
 
 -- --------------------------------------------------------
 
@@ -152,6 +185,19 @@ CREATE TABLE `role` (
 INSERT INTO `role` (`id`, `name`) VALUES
 (1, 'admin'),
 (2, 'member');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `temp`
+--
+
+CREATE TABLE `temp` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `book_id` int(11) NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -193,14 +239,16 @@ ALTER TABLE `book`
 -- Indexes for table `booking`
 --
 ALTER TABLE `booking`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `booking_detail`
 --
 ALTER TABLE `booking_detail`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `booking_id` (`booking_id`);
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `book_id` (`book_id`);
 
 --
 -- Indexes for table `category`
@@ -212,14 +260,17 @@ ALTER TABLE `category`
 -- Indexes for table `loaning`
 --
 ALTER TABLE `loaning`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `booking_id` (`booking_id`);
 
 --
 -- Indexes for table `loaning_detail`
 --
 ALTER TABLE `loaning_detail`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `loaning_id` (`loaning_id`);
+  ADD KEY `loaning_id` (`loaning_id`),
+  ADD KEY `book_id` (`book_id`);
 
 --
 -- Indexes for table `returning`
@@ -233,6 +284,14 @@ ALTER TABLE `returning`
 --
 ALTER TABLE `role`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `temp`
+--
+ALTER TABLE `temp`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `book_id` (`book_id`);
 
 --
 -- Indexes for table `user`
@@ -255,13 +314,13 @@ ALTER TABLE `book`
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `booking_detail`
 --
 ALTER TABLE `booking_detail`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `category`
@@ -273,13 +332,13 @@ ALTER TABLE `category`
 -- AUTO_INCREMENT for table `loaning`
 --
 ALTER TABLE `loaning`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `loaning_detail`
 --
 ALTER TABLE `loaning_detail`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `returning`
@@ -292,6 +351,12 @@ ALTER TABLE `returning`
 --
 ALTER TABLE `role`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `temp`
+--
+ALTER TABLE `temp`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `user`
@@ -310,22 +375,44 @@ ALTER TABLE `book`
   ADD CONSTRAINT `book_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
+-- Constraints for table `booking`
+--
+ALTER TABLE `booking`
+  ADD CONSTRAINT `booking_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `booking_detail`
 --
 ALTER TABLE `booking_detail`
-  ADD CONSTRAINT `booking_detail_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `booking_detail_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `booking_detail_ibfk_2` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `loaning`
+--
+ALTER TABLE `loaning`
+  ADD CONSTRAINT `loaning_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `loaning_ibfk_2` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `loaning_detail`
 --
 ALTER TABLE `loaning_detail`
-  ADD CONSTRAINT `loaning_detail_ibfk_1` FOREIGN KEY (`loaning_id`) REFERENCES `loaning` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `loaning_detail_ibfk_1` FOREIGN KEY (`loaning_id`) REFERENCES `loaning` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `loaning_detail_ibfk_2` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `returning`
 --
 ALTER TABLE `returning`
   ADD CONSTRAINT `returning_ibfk_1` FOREIGN KEY (`loaning_id`) REFERENCES `loaning` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `temp`
+--
+ALTER TABLE `temp`
+  ADD CONSTRAINT `temp_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `temp_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `user`

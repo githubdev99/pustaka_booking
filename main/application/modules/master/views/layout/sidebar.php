@@ -40,6 +40,12 @@
                         <i class="mdi mdi-book-multiple align-self-center"></i><span>Buku</span>
                     </a>
                 </li>
+
+                <li class="mb-2">
+                    <a href="<?= base_url() ?>admin/booking" class="custom-nav text-white <?= ($this->uri->segment(2) == 'booking') ? 'active' : ''; ?>">
+                        <i class="mdi mdi-bookmark align-self-center"></i><span>List Booking Member</span>
+                    </a>
+                </li>
             <?php else : ?>
                 <li class="mb-2">
                     <a href="<?= base_url() ?>member/home" class="custom-nav text-white <?= ($this->uri->segment(2) == 'home') ? 'active' : ''; ?>">
@@ -48,8 +54,8 @@
                 </li>
 
                 <li class="mb-2">
-                    <a href="<?= base_url() ?>member/booking" class="custom-nav text-white <?= ($this->uri->segment(2) == 'booking') ? 'active' : ''; ?>">
-                        <i class="mdi mdi-bookmark align-self-center"></i><span>Booking</span>
+                    <a href="<?= base_url() ?>member/booking" class="custom-nav text-white <?= (($this->uri->segment(2) == 'booking') && ($this->uri->segment(3) == '')) ? 'active' : ''; ?>">
+                        <i class="mdi mdi-bookmark align-self-center"></i><span>History Booking</span>
                     </a>
                 </li>
             <?php endif ?>

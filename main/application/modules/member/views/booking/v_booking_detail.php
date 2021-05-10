@@ -4,16 +4,9 @@
         <div class="page-title-box">
             <div class="row">
                 <div class="col">
-                    <small class="text-muted font-14">
-                        <b>Master</b>
-                    </small>
                     <h3 style="margin-top: 0px;">
-                        Buku
+                        List Booking
                     </h3>
-                </div>
-                <!--end col-->
-                <div class="col-auto align-self-top">
-                    <a href="<?= base_url() ?>admin/book/add" class="btn btn-info waves-effect waves-light"><i class="fas fa-plus mr-2"></i>Tambah Buku</a>
                 </div>
                 <!--end col-->
             </div>
@@ -39,10 +32,8 @@
                                 <th style="white-space: nowrap;">Kategori</th>
                                 <th style="white-space: nowrap;">ISBN</th>
                                 <th style="white-space: nowrap;">Pengarang</th>
-                                <th style="white-space: nowrap;">Stok</th>
-                                <th style="white-space: nowrap;">Total Pinjam</th>
-                                <th style="white-space: nowrap;">Total Booking</th>
-                                <th style="white-space: nowrap;">Opsi</th>
+                                <th style="white-space: nowrap;">Penerbit</th>
+                                <th style="white-space: nowrap;">Tahun Terbit</th>
                             </tr>
                         </thead>
 

@@ -21,6 +21,13 @@ class MY_Controller extends MX_Controller
 
 		if ($this->session->has_userdata('id')) {
 			$this->core['user'] = $this->dataUser($this->session->userdata('id'));
+
+			$this->core['totalBookingTemp'] = $this->api_model->count_all_data([
+				'where' => [
+					'user_id' => $this->core['user']['id']
+				],
+				'table' => 'temp',
+			]);
 		}
 
 		$this->core['totalMember'] = $this->api_model->count_all_data([
@@ -28,6 +35,14 @@ class MY_Controller extends MX_Controller
 				'role_id' => 2
 			],
 			'table' => 'user',
+		]);
+		$this->core['totalLoaning'] = $this->api_model->count_all_data([
+			'table' => 'loaning_detail',
+			'group_by' => 'book_id'
+		]);
+		$this->core['totalBooking'] = $this->api_model->count_all_data([
+			'table' => 'booking_detail',
+			'group_by' => 'book_id'
 		]);
 		$this->core['totalBook'] = $this->api_model->count_all_data([
 			'table' => 'book',

@@ -3,6 +3,13 @@
     <!-- Navbar -->
     <nav class="navbar-custom">
         <ul class="list-unstyled topbar-nav float-right mb-0">
+            <li class="notification-list">
+                <a class="nav-link arrow-none waves-light waves-effect" href="<?= base_url() ?>member/booking/temp" role="button" aria-haspopup="false" aria-expanded="false">
+                    <i data-feather="shopping-cart" class="align-self-center topbar-icon"></i>
+                    <span class="badge badge-danger badge-pill noti-icon-badge" id="totalBookingTemp"><?= $core['totalBookingTemp'] ?></span>
+                </a>
+            </li>
+
             <li class="dropdown">
                 <a class="nav-link dropdown-toggle waves-effect waves-light nav-user" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                     <span class="ml-1 nav-user-name hidden-sm"><?= $core['user']['name'] ?></span>
