@@ -85,7 +85,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <form method="post" enctype="multipart/form-data" name="edit">
-                <div class="modal-header bg-info">
+                <div class="modal-header bg-success">
                     <h6 class="modal-title m-0 text-white" id="edit1">Edit Kategori Buku</h6>
                     <button type="button" class="close " data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true"><i class="la la-times text-white"></i></span>
