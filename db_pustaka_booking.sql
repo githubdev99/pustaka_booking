@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 08, 2021 at 12:00 PM
+-- Generation Time: May 10, 2021 at 08:22 AM
 -- Server version: 10.4.13-MariaDB
 -- PHP Version: 7.4.7
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `db_library`
+-- Database: `db_pustaka_booking`
 --
 
 -- --------------------------------------------------------
@@ -33,11 +33,19 @@ CREATE TABLE `book` (
   `name` varchar(100) NOT NULL,
   `isbn` varchar(20) NOT NULL,
   `image` varchar(256) NOT NULL,
-  `author` varchar(50) DEFAULT NULL,
-  `publisher` varchar(50) DEFAULT NULL,
+  `author` varchar(50) NOT NULL,
+  `publisher` varchar(50) NOT NULL,
   `publication_year` year(4) NOT NULL,
   `stock` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='buku';
+
+--
+-- Dumping data for table `book`
+--
+
+INSERT INTO `book` (`id`, `category_id`, `name`, `isbn`, `image`, `author`, `publisher`, `publication_year`, `stock`) VALUES
+(12, 4, 'test', '123123', 'book-20210510123541-test.jpeg', 'test', 'test', 2021, 123),
+(13, 5, 'hghgc', '34565', 'book-20210510125341-hghgc.png', 'ascasc', 'ascascasc', 2022, 123123);
 
 -- --------------------------------------------------------
 
@@ -74,6 +82,17 @@ CREATE TABLE `category` (
   `id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='kategori buku';
+
+--
+-- Dumping data for table `category`
+--
+
+INSERT INTO `category` (`id`, `name`) VALUES
+(1, 'Sains'),
+(2, 'Komputer'),
+(3, 'Agama'),
+(4, 'Bahasa'),
+(5, 'Hobby');
 
 -- --------------------------------------------------------
 
@@ -126,6 +145,14 @@ CREATE TABLE `role` (
   `name` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='hak akses';
 
+--
+-- Dumping data for table `role`
+--
+
+INSERT INTO `role` (`id`, `name`) VALUES
+(1, 'admin'),
+(2, 'member');
+
 -- --------------------------------------------------------
 
 --
@@ -139,12 +166,17 @@ CREATE TABLE `user` (
   `password` varchar(256) NOT NULL,
   `name` varchar(100) NOT NULL,
   `image` varchar(256) DEFAULT NULL,
-  `gender` enum('male','female') NOT NULL,
-  `address` text DEFAULT NULL,
-  `phone_number` varchar(20) NOT NULL,
-  `is_active` tinyint(1) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='pengguna';
+
+--
+-- Dumping data for table `user`
+--
+
+INSERT INTO `user` (`id`, `role_id`, `email`, `password`, `name`, `image`, `is_active`, `created_at`) VALUES
+(1, 1, 'admin@gmail.com', '$2y$10$VIiM8rqmexhdZOyhLkLXlelAKUg3JJjeJu8Sme/UgWCMs.DMPrnsC', 'Admin Pustaka Booking', NULL, 1, '2021-05-10 08:58:00'),
+(2, 2, 'testing@gmail.com', '$2y$10$X/frVeHqpepvc7XsU.7joO0ZOEqwoUwJqoyJAXDIdlghFBvUGM5X2', 'Testing Member', NULL, 1, '2021-05-10 12:39:30');
 
 --
 -- Indexes for dumped tables
@@ -217,7 +249,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `book`
 --
 ALTER TABLE `book`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `booking`
@@ -235,7 +267,7 @@ ALTER TABLE `booking_detail`
 -- AUTO_INCREMENT for table `category`
 --
 ALTER TABLE `category`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `loaning`
@@ -259,13 +291,13 @@ ALTER TABLE `returning`
 -- AUTO_INCREMENT for table `role`
 --
 ALTER TABLE `role`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables
