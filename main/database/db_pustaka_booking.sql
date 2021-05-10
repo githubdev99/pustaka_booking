@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 10, 2021 at 07:03 PM
+-- Generation Time: May 10, 2021 at 07:25 PM
 -- Server version: 10.4.17-MariaDB
 -- PHP Version: 7.4.13
 
@@ -45,7 +45,7 @@ CREATE TABLE `book` (
 
 INSERT INTO `book` (`id`, `category_id`, `name`, `isbn`, `image`, `author`, `publisher`, `publication_year`, `stock`) VALUES
 (12, 4, 'test', '123123', 'book-20210510123541-test.jpeg', 'test', 'test', 2021, 119),
-(13, 5, 'hghgc', '34565', 'book-20210510125341-hghgc.png', 'ascasc', 'ascascasc', 2022, 8);
+(13, 5, 'hghgc', '34565', 'book-20210510125341-hghgc.png', 'ascasc', 'ascascasc', 2022, 7);
 
 -- --------------------------------------------------------
 
@@ -66,7 +66,8 @@ CREATE TABLE `booking` (
 --
 
 INSERT INTO `booking` (`id`, `booking_number`, `user_id`, `pickup_due_date`, `created_at`) VALUES
-(6, 'ID2105106', 2, '2021-05-12', '2021-05-10 21:14:12');
+(6, 'ID2105106', 2, '2021-05-12', '2021-05-10 21:14:12'),
+(7, 'ID2105117', 2, '2021-05-13', '2021-05-11 00:09:50');
 
 -- --------------------------------------------------------
 
@@ -86,7 +87,8 @@ CREATE TABLE `booking_detail` (
 
 INSERT INTO `booking_detail` (`id`, `booking_id`, `book_id`) VALUES
 (11, 6, 13),
-(12, 6, 12);
+(12, 6, 12),
+(13, 7, 13);
 
 -- --------------------------------------------------------
 
@@ -108,7 +110,8 @@ INSERT INTO `category` (`id`, `name`) VALUES
 (2, 'Komputer'),
 (3, 'Agama'),
 (4, 'Bahasa'),
-(5, 'Hobby');
+(5, 'Hobby'),
+(6, 'Test');
 
 -- --------------------------------------------------------
 
@@ -135,7 +138,8 @@ CREATE TABLE `loaning` (
 --
 
 INSERT INTO `loaning` (`id`, `loaning_number`, `booking_id`, `user_id`, `loaning_time`, `return_due_date`, `return_date`, `is_return_done`, `penalty_day`, `penalty_price`, `created_at`) VALUES
-(7, 'LN2105107', 6, 2, 6, '2021-05-16', '2021-05-10', 1, 0, 1000, '2021-05-10 21:14:22');
+(7, 'LN2105107', 6, 2, 6, '2021-05-16', '2021-05-10', 1, 0, 1000, '2021-05-10 21:14:22'),
+(8, 'LN2105118', 7, 2, 3, '2021-05-14', NULL, 0, 0, 500, '2021-05-11 00:22:24');
 
 -- --------------------------------------------------------
 
@@ -155,7 +159,8 @@ CREATE TABLE `loaning_detail` (
 
 INSERT INTO `loaning_detail` (`id`, `loaning_id`, `book_id`) VALUES
 (13, 7, 13),
-(14, 7, 12);
+(14, 7, 12),
+(15, 8, 13);
 
 -- --------------------------------------------------------
 
@@ -297,31 +302,31 @@ ALTER TABLE `book`
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `booking_detail`
 --
 ALTER TABLE `booking_detail`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `category`
 --
 ALTER TABLE `category`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `loaning`
 --
 ALTER TABLE `loaning`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `loaning_detail`
 --
 ALTER TABLE `loaning_detail`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `role`
@@ -333,7 +338,7 @@ ALTER TABLE `role`
 -- AUTO_INCREMENT for table `temp`
 --
 ALTER TABLE `temp`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `user`
