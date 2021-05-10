@@ -320,12 +320,14 @@ class Book extends MY_Controller
         }
 
         $param['column_search'] = [
-            'book.image', 'book.name', 'category_name', 'book.isbn', 'book.author', 'book.publisher', 'book.stock', 'totalBorrow', 'totalBook'
+            'book.image', 'book.name', 'category_name', 'book.isbn', 'book.author', 'book.publisher', 'book.stock'
         ];
         $param['column_order'] = [
-            null, 'book.image', 'book.name', 'category_name', 'book.isbn', 'book.author', 'book.publisher', 'book.stock', 'totalBorrow', 'totalBook', null
+            null, 'book.image', 'book.name', 'category_name', 'book.isbn', 'book.author', 'book.publisher', 'book.stock', null, null, null
         ];
-        $param['field'] = 'book.*, category.name as category_name';
+        $param['field'] = '
+        book.*,
+        category.name as category_name';
         $param['table'] = 'book';
         $param['join'] = [
             [
@@ -349,6 +351,21 @@ class Book extends MY_Controller
                 $no++;
                 $column = [];
 
+                $totalBorrow = $this->api_model->count_all_data([
+                    'table' => 'loaning_detail',
+                    'where' => [
+                        'book_id' => $key->id,
+                    ],
+                    'group_by' => 'book_id'
+                ]);
+                $totalBook = $this->api_model->count_all_data([
+                    'table' => 'booking_detail',
+                    'where' => [
+                        'book_id' => $key->id,
+                    ],
+                    'group_by' => 'book_id'
+                ]);
+
                 $image = (!empty($key->image)) ? "{$this->core['imageUpload']}books/{$key->image}" : $this->core['imageNotFound'];
 
                 $column[] = $no;
@@ -358,8 +375,8 @@ class Book extends MY_Controller
                 $column[] = $key->isbn;
                 $column[] = $key->author;
                 $column[] = $key->stock;
-                $column[] = $key->stock;
-                $column[] = $key->stock;
+                $column[] = $totalBorrow;
+                $column[] = $totalBook;
                 $column[] = '
                 <a href="' . base_url() . 'admin/book/edit/' . encrypt_text($key->id) . '" class="btn btn-success btn-sm" data-toggle="tooltip" title="Edit Data"><i class="fas fa-edit"></i></a>
                 <button type="button" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Hapus Data" onclick="show_modal({ modal: ' . "'delete'" . ', id: ' . "'" . encrypt_text($key->id) . "'" . ' })"><i class="fas fa-trash-alt"></i></button>

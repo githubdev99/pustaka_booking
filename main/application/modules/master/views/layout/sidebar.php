@@ -22,14 +22,6 @@
                 </li>
 
                 <li class="mb-2">
-                    <a href="<?= base_url() ?>admin/report" class="custom-nav text-white <?= ($this->uri->segment(2) == 'report') ? 'active' : ''; ?>">
-                        <i class="mdi mdi-clipboard-text-outline align-self-center"></i><span>Laporan</span>
-                    </a>
-                </li>
-
-                <hr class="hr-dashed hr-menu">
-
-                <li class="mb-2">
                     <a href="<?= base_url() ?>admin/category" class="custom-nav text-white <?= ($this->uri->segment(2) == 'category') ? 'active' : ''; ?>">
                         <i class="mdi mdi-tag-multiple align-self-center"></i><span>Kategori Buku</span>
                     </a>
@@ -44,6 +36,12 @@
                 <li class="mb-2">
                     <a href="<?= base_url() ?>admin/booking" class="custom-nav text-white <?= ($this->uri->segment(2) == 'booking') ? 'active' : ''; ?>">
                         <i class="mdi mdi-bookmark align-self-center"></i><span>List Booking Member</span>
+                    </a>
+                </li>
+
+                <li class="mb-2">
+                    <a href="<?= base_url() ?>admin/returning" class="custom-nav text-white <?= ($this->uri->segment(2) == 'returning') ? 'active' : ''; ?>">
+                        <i class="mdi mdi-book-open-page-variant align-self-center"></i><span>List Peminjaman</span>
                     </a>
                 </li>
             <?php else : ?>

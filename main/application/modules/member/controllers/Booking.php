@@ -165,6 +165,26 @@ class Booking extends MY_Controller
                             'message' => "Buku gagal di booking [Database error! Error Code [{$db_error['code']}] Error: {$db_error['message']}]",
                         ];
                     } else {
+                        foreach ($parsing['temp'] as $key_temp) {
+                            $parsing['book'] = $this->api_model->select_data([
+                                'field' => '*',
+                                'table' => 'book',
+                                'where' => [
+                                    'id' => $key_temp->book_id,
+                                ],
+                            ])->row();
+
+                            $this->api_model->send_data([
+                                'where' => [
+                                    'id' => $key_temp->book_id,
+                                ],
+                                'data' => [
+                                    'stock' => $parsing['book']->stock - 1,
+                                ],
+                                'table' => 'book'
+                            ]);
+                        }
+
                         $this->api_model->send_data([
                             'where' => [
                                 'id' => $lastId,
@@ -365,7 +385,11 @@ class Booking extends MY_Controller
                     ],
                 ])->row();
                 if (!empty($parsing['loaning'])) {
-                    $status = '<span class="badge badge-success">Sudah Pinjam</span>';
+                    if ($parsing['loaning']->is_return_done) {
+                        $status = '<span class="badge badge-success">Sudah Kembali</span>';
+                    } else {
+                        $status = '<span class="badge badge-success">Sudah Pinjam</span>';
+                    }
                 } else {
                     $status = '<span class="badge badge-secondary">Belum Pinjam</span>';
                 }

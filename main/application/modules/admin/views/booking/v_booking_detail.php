@@ -54,7 +54,7 @@
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">Denda/Hari <span class="text-danger">*</span></label>
                         <div class="col-sm-6">
-                            <input class="form-control process" type="text" name="penalty_price" onkeypress="number_only(event)" required>
+                            <input class="form-control process" type="text" name="penalty_price" onkeypress="number_only(event)" onkeyup="running_rupiah('penalty_price', this.value)" required>
                         </div>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
             </div>
             <div class="text-right mb-5">
                 <input type="hidden" name="booking_id" value="<?= $this->uri->segment('4') ?>">
-                <a href="<?= base_url() ?>admin/book" class="btn btn-danger btn-lg mr-2 waves-effect waves-light">Batal</a>
+                <a href="<?= base_url() ?>admin/booking" class="btn btn-danger btn-lg mr-2 waves-effect waves-light">Batal</a>
                 <button type="submit" name="process" class="btn btn-success btn-lg waves-effect waves-light">Proses Peminjaman</button>
             </div>
         </div>
