@@ -13,6 +13,13 @@
                 </div>
                 <!--end col-->
                 <div class="col-auto align-self-top">
+                    <div class="btn-group dropleft mb-2 mr-2 mb-md-0">
+                        <button type="button" class="btn btn-secondary waves-effect waves-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file mr-2"></i>Laporan</button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="<?= base_url() ?>admin/report/print_book" target="_blank">Print</a>
+                            <a class="dropdown-item" href="<?= base_url() ?>admin/report/excel_book">Excel</a>
+                        </div>
+                    </div><!-- /btn-group -->
                     <a href="<?= base_url() ?>admin/book/add" class="btn btn-info waves-effect waves-light"><i class="fas fa-plus mr-2"></i>Tambah Buku</a>
                 </div>
                 <!--end col-->
