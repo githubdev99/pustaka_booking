@@ -24,19 +24,19 @@
 <!-- end page title end breadcrumb -->
 <div class="row">
     <div class="col-lg-12">
-        <form method="post" enctype="multipart/form-data" name="add">
+        <form method="post" enctype="multipart/form-data" name="edit">
             <div class="card card-default">
                 <div class="card-body">
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">ISBN <span class="text-danger">*</span></label>
                         <div class="col-sm-6">
-                            <input class="form-control edit" type="text" name="isbn" required>
+                            <input class="form-control edit" type="text" name="isbn" value="<?= $data['isbn'] ?>" required>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">Judul <span class="text-danger">*</span></label>
                         <div class="col-sm-10">
-                            <input class="form-control edit" type="text" name="name" required>
+                            <input class="form-control edit" type="text" name="name" value="<?= $data['name'] ?>" required>
                         </div>
                     </div>
                     <div class="form-group row">
@@ -45,7 +45,7 @@
                             <select class="select2 form-control mb-3 custom-select" name="category_id" style="width: 100%; height:36px;" required>
                                 <option value=""></option>
                                 <?php foreach ($core['category'] as $key_category) : ?>
-                                    <option value="<?= encrypt_text($key_category->id) ?>"><?= $key_category->name ?></option>
+                                    <option value="<?= encrypt_text($key_category->id) ?>" <?= ($data['categoryId'] == $key_category->id) ? 'selected' : ''; ?>><?= $key_category->name ?></option>
                                 <?php endforeach ?>
                             </select>
                         </div>
@@ -53,26 +53,26 @@
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">Penulis <span class="text-danger">*</span></label>
                         <div class="col-sm-10">
-                            <input class="form-control edit" type="text" name="author" required>
+                            <input class="form-control edit" type="text" name="author" value="<?= $data['author'] ?>" required>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">Penerbit <span class="text-danger">*</span></label>
                         <div class="col-sm-10">
-                            <input class="form-control edit" type="text" name="publisher" required>
+                            <input class="form-control edit" type="text" name="publisher" value="<?= $data['publisher'] ?>" required>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">Tahun Terbit <span class="text-danger">*</span></label>
                         <div class="col-sm-10">
-                            <input class="form-control edit" type="text" onkeypress="number_only(event)" name="publication_year" maxlength="4" required>
+                            <input class="form-control edit" type="text" onkeypress="number_only(event)" name="publication_year" maxlength="4" value="<?= $data['publicationYear'] ?>" required>
                             <small class="form-text text-muted">Hanya berisi angka (0-9)</small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label text-right">Stok Tersedia <span class="text-danger">*</span></label>
                         <div class="col-sm-10">
-                            <input class="form-control edit" type="text" onkeypress="number_only(event)" name="stock" required>
+                            <input class="form-control edit" type="text" onkeypress="number_only(event)" name="stock" value="<?= $data['stock'] ?>" required>
                             <small class="form-text text-muted">Hanya berisi angka (0-9)</small>
                         </div>
                     </div>
@@ -80,18 +80,19 @@
                         <label class="col-sm-2 col-form-label text-right">Gambar <span class="text-danger">*</span></label>
                         <div class="col-sm-10">
                             <div class="custom-file mb-3">
-                                <input type="file" class="custom-file-input" name="image" id="gambar" style="cursor: pointer;" required>
+                                <input type="file" class="custom-file-input" name="image" id="gambar" style="cursor: pointer;">
+                                <input type="hidden" name="image_old" id="gambar_old" value="<?= (!empty($data['imageName'])) ? $data['imageName'] : ''; ?>">
                                 <label class="custom-file-label" id="nama_gambar">Choose file</label>
                             </div>
-                            <img class="img-thumbnail" id="preview_gambar" alt="Gambar Buku..." width="200" src="<?= base_url() ?>assets/images/img-thumbnail.png" data-holder-rendered="true">
-                            <button type="button" id="remove_preview" class="btn btn-danger waves-effect waves-light mt-2" style="display: none;"><i class="far fa-trash-alt mr-2"></i>Remove Image</button>
+                            <img class="img-thumbnail" id="preview_gambar" alt="image" width="200" src="<?= (!empty($data['image'])) ? $data['image'] : base_url() . 'assets/images/img-thumbnail.png'; ?>" data-holder-rendered="true">
+                            <button type="button" id="remove_preview" class="btn btn-danger waves-effect waves-light mt-2"><i class="far fa-trash-alt mr-2"></i>Remove Image</button>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="text-right mb-5">
                 <a href="<?= base_url() ?>admin/book" class="btn btn-danger btn-lg mr-2 waves-effect waves-light">Batal</a>
-                <button type="submit" name="add" class="btn btn-info btn-lg waves-effect waves-light">Tambah</button>
+                <button type="submit" name="edit" class="btn btn-success btn-lg waves-effect waves-light">Edit</button>
             </div>
         </form>
     </div>

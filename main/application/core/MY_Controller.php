@@ -17,6 +17,7 @@ class MY_Controller extends MX_Controller
 		$this->core['app_name'] = 'Pustaka Booking';
 		$this->core['imageNotFound'] = "{$this->core['url_images']}img-thumbnail.png";
 		$this->core['imageUpload'] = base_url() . "assets/upload/";
+		$this->core['dirUpload'] = "assets/upload/";
 
 		if ($this->session->has_userdata('id')) {
 			$this->core['user'] = $this->dataUser($this->session->userdata('id'));
@@ -120,7 +121,7 @@ class MY_Controller extends MX_Controller
 		if ($param['session'] == 'member') {
 			if ($param['login']) {
 				if (!empty($this->core['user']) && ($this->core['user']['role']['id'] == '2')) {
-					redirect(base_url() . 'member/dashboard', 'refresh');
+					redirect(base_url() . 'member/home', 'refresh');
 				}
 			} else {
 				if (empty($this->core['user'])) {

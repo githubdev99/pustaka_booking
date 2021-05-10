@@ -76,7 +76,7 @@ class Auth extends MY_Controller
                         'isError' => $isError,
                         'type' => 'success',
                         'message' => 'Login berhasil',
-                        'callback' => base_url() . 'admin/dashboard'
+                        'callback' => base_url()
                     ];
 
                     $this->session->set_userdata([

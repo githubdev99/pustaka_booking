@@ -40,6 +40,18 @@
                         <i class="mdi mdi-book-multiple align-self-center"></i><span>Buku</span>
                     </a>
                 </li>
+            <?php else : ?>
+                <li class="mb-2">
+                    <a href="<?= base_url() ?>member/home" class="custom-nav text-white <?= ($this->uri->segment(2) == 'home') ? 'active' : ''; ?>">
+                        <i class="mdi mdi-home align-self-center"></i><span>Home</span>
+                    </a>
+                </li>
+
+                <li class="mb-2">
+                    <a href="<?= base_url() ?>member/booking" class="custom-nav text-white <?= ($this->uri->segment(2) == 'booking') ? 'active' : ''; ?>">
+                        <i class="mdi mdi-bookmark align-self-center"></i><span>Booking</span>
+                    </a>
+                </li>
             <?php endif ?>
         </ul>
     </div>
