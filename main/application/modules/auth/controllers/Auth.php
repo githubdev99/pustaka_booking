@@ -188,14 +188,6 @@ class Auth extends MY_Controller
         $this->session->unset_userdata('id');
         $this->session->unset_userdata('role');
 
-        $this->alert_popup([
-            'name' => 'show_alert',
-            'swal' => [
-                'title' => 'Anda berhasil logout!',
-                'type' => 'success'
-            ]
-        ]);
-
         redirect(base_url() . 'auth/login', 'refresh');
     }
 }
